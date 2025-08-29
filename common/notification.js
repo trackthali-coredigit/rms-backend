@@ -1,13 +1,13 @@
 // notificationService.js
 const admin = require("firebase-admin");
-const serviceAccount = require("./notification.json");
+// const serviceAccount = require("./notification.json");
 const { db } = require("../config/db");
 const { Op } = require("sequelize");
 const { emitToSockets } = require("../config/socketConfig")
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
+// admin.initializeApp({
+//     credential: admin.credential.cert(serviceAccount)
+// });
 
 const sendNotification = async (userId, message, data) => {
     try {

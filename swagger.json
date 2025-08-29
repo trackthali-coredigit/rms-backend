@@ -1,2356 +1,1523 @@
 {
-  "swagger": "2.0",
+  "openapi": "3.0.0",
   "info": {
     "title": "MABO APIs",
-    "description": "Description",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "description": "API documentation for the MABO Restaurant Management System"
   },
-  "host": "164.90.189.86:9000",
-  "basePath": "/",
-  "schemes": [
-    "http"
+  "servers": [
+    {
+      "url": "http://127.0.0.1:9000",
+      "description": "Local server"
+    }
   ],
   "paths": {
-    "/": {
-      "get": {
-        "description": "",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/superAdminSignIn": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "email": {
-                  "example": "any"
-                },
-                "password": {
-                  "example": "any"
-                },
-                "device_id": {
-                  "example": "any"
-                },
-                "device_type": {
-                  "example": "any"
-                },
-                "device_token": {
-                  "example": "any"
+        "summary": "Super admin sign in",
+        "tags": [
+          "SuperAdmin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "device_id": {
+                    "type": "string"
+                  },
+                  "device_type": {
+                    "type": "string"
+                  },
+                  "device_token": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful login"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/create_admin": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "first_name": {
-                  "example": "any"
-                },
-                "last_name": {
-                  "example": "any"
-                },
-                "username": {
-                  "example": "any"
-                },
-                "country_code": {
-                  "example": "any"
-                },
-                "iso_code": {
-                  "example": "any"
-                },
-                "phone_no": {
-                  "example": "any"
-                },
-                "email": {
-                  "example": "any"
-                },
-                "password": {
-                  "example": "any"
-                },
-                "business_name": {
-                  "example": "any"
-                },
-                "business_email": {
-                  "example": "any"
-                },
-                "business_phone_no": {
-                  "example": "any"
-                },
-                "business_country_code": {
-                  "example": "any"
-                },
-                "business_iso_code": {
-                  "example": "any"
+        "summary": "Create a new admin",
+        "tags": [
+          "SuperAdmin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "business_image": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "first_name": {
+                    "type": "string"
+                  },
+                  "last_name": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "phone_no": {
+                    "type": "string"
+                  },
+                  "iso_code": {
+                    "type": "string"
+                  },
+                  "country_code": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "business_name": {
+                    "type": "string"
+                  },
+                  "business_email": {
+                    "type": "string"
+                  },
+                  "business_phone_no": {
+                    "type": "string"
+                  },
+                  "business_iso_code": {
+                    "type": "string"
+                  },
+                  "business_country_code": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
-          "201": {
-            "description": "Created"
+          "200": {
+            "description": "Admin created"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "409": {
-            "description": "Conflict"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/edit_admin": {
       "put": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "admin_id": {
-                  "example": "any"
-                },
-                "business_name": {
-                  "example": "any"
-                },
-                "business_email": {
-                  "example": "any"
-                },
-                "business_phone_no": {
-                  "example": "any"
-                },
-                "business_country_code": {
-                  "example": "any"
-                },
-                "business_iso_code": {
-                  "example": "any"
-                },
-                "first_name": {
-                  "example": "any"
-                },
-                "last_name": {
-                  "example": "any"
-                },
-                "username": {
-                  "example": "any"
-                },
-                "country_code": {
-                  "example": "any"
-                },
-                "iso_code": {
-                  "example": "any"
-                },
-                "phone_no": {
-                  "example": "any"
-                },
-                "email": {
-                  "example": "any"
-                },
-                "password": {
-                  "example": "any"
+        "summary": "Edit an admin",
+        "tags": [
+          "SuperAdmin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "business_image": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "first_name": {
+                    "type": "string"
+                  },
+                  "last_name": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "phone_no": {
+                    "type": "string"
+                  },
+                  "iso_code": {
+                    "type": "string"
+                  },
+                  "country_code": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "business_name": {
+                    "type": "string"
+                  },
+                  "business_email": {
+                    "type": "string"
+                  },
+                  "business_phone_no": {
+                    "type": "string"
+                  },
+                  "business_iso_code": {
+                    "type": "string"
+                  },
+                  "business_country_code": {
+                    "type": "string"
+                  },
+                  "admin_id": {
+                    "type": "integer"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Admin edited"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "409": {
-            "description": "Conflict"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/getBussinessAdminList": {
       "get": {
-        "description": "",
+        "summary": "Get business admin list",
+        "tags": [
+          "SuperAdmin"
+        ],
         "parameters": [
           {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "page",
             "in": "query",
-            "type": "string"
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Page number"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Business admin list"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/getStaffList": {
       "get": {
-        "description": "",
+        "summary": "Get staff list",
+        "tags": [
+          "SuperAdmin"
+        ],
         "parameters": [
           {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Page number"
+          },
+          {
+            "in": "query",
+            "name": "business_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Business ID"
+          },
+          {
+            "in": "query",
+            "name": "role",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Role (waiter, barista, supervisor)"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Staff list"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/getBussinessList": {
       "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
+        "summary": "Get business list",
+        "tags": [
+          "SuperAdmin"
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Business list"
           },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+          "400": {
+            "description": "Validation error"
           }
         }
       }
     },
     "/getBussinessTableList": {
       "get": {
-        "description": "",
+        "summary": "Get business table list",
+        "tags": [
+          "SuperAdmin"
+        ],
         "parameters": [
           {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "business_id",
             "in": "query",
-            "type": "string"
-          },
-          {
             "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Page number"
+          },
+          {
             "in": "query",
-            "type": "string"
+            "name": "business_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Business ID"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Business table list"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/getBussinessCategoryList": {
       "get": {
-        "description": "",
+        "summary": "Get business category list",
+        "tags": [
+          "SuperAdmin"
+        ],
         "parameters": [
           {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "business_id",
             "in": "query",
-            "type": "string"
-          },
-          {
             "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Page number"
+          },
+          {
             "in": "query",
-            "type": "string"
+            "name": "business_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Business ID"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Business category list"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/getBussinessItemList": {
       "get": {
-        "description": "",
+        "summary": "Get business item list",
+        "tags": [
+          "SuperAdmin"
+        ],
         "parameters": [
           {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "category_id",
             "in": "query",
-            "type": "string"
-          },
-          {
             "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Page number"
+          },
+          {
             "in": "query",
-            "type": "string"
+            "name": "category_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Category ID"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Business item list"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/signin": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "emailOrUsername": {
-                  "example": "any"
-                },
-                "password": {
-                  "example": "any"
-                },
-                "device_id": {
-                  "example": "any"
-                },
-                "device_type": {
-                  "example": "any"
-                },
-                "device_token": {
-                  "example": "any"
-                },
-                "role": {
-                  "example": "any"
+        "summary": "Admin sign in",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "emailOrUsername": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "device_id": {
+                    "type": "string"
+                  },
+                  "device_type": {
+                    "type": "string"
+                  },
+                  "device_token": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful login"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/otp_verify": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "emailOrUsername": {
-                  "example": "any"
-                },
-                "otp": {
-                  "example": "any"
-                },
-                "role": {
-                  "example": "any"
-                },
-                "username": {
-                  "example": "any"
-                },
-                "where": {
-                  "example": "any"
+        "summary": "Verify OTP for admin",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "emailOrUsername": {
+                    "type": "string"
+                  },
+                  "otp": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OTP verified"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/forgetPassword": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "emailOrUsername": {
-                  "example": "any"
+        "summary": "Admin forget password",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "emailOrUsername": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Password reset link sent"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/StaffForgetPassword": {
       "put": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "user_id": {
-                  "example": "any"
-                },
-                "password": {
-                  "example": "any"
+        "summary": "Staff forget password",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Password changed"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/resetPassword": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "emailOrUsername": {
-                  "example": "any"
-                },
-                "newPassword": {
-                  "example": "any"
+        "summary": "Admin reset password",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "emailOrUsername": {
+                    "type": "string"
+                  },
+                  "newPassword": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Password reset successful"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/changePassword": {
       "put": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "oldPassword": {
-                  "example": "any"
-                },
-                "newPassword": {
-                  "example": "any"
+        "summary": "Admin change password",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "oldPassword": {
+                    "type": "string"
+                  },
+                  "newPassword": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Password changed"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/signOut": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
+        "summary": "Admin sign out",
+        "tags": [
+          "Admin"
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Sign out successful"
           },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal Server Error"
+          "400": {
+            "description": "Validation error"
           }
         }
       }
     },
     "/businessHours": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "day": {
-                  "example": "any"
-                },
-                "opening_hours": {
-                  "example": "any"
-                },
-                "closing_hours": {
-                  "example": "any"
-                },
-                "day_status": {
-                  "example": "any"
-                },
-                "value": {
-                  "example": "any"
+        "summary": "Set business hours",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "day": {
+                    "type": "string"
+                  },
+                  "opening_hours": {
+                    "type": "string"
+                  },
+                  "closing_hours": {
+                    "type": "string"
+                  },
+                  "day_status": {
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "type": "string",
+                    "enum": [
+                      "is_all",
+                      "is_create",
+                      "is_edit",
+                      "is_get"
+                    ]
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
-          },
-          "201": {
-            "description": "Created"
+            "description": "Business hours set"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/addCategory": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "role": {
-                  "example": "any"
+        "summary": "Add a new category",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category_name": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
-          "201": {
-            "description": "Created"
+          "200": {
+            "description": "Category added"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/deleteCategory": {
       "delete": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "category_id": {
-                  "example": "any"
+        "summary": "Delete a category",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category_id": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Category deleted"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/addItem": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "where": {
-                  "example": "any"
+        "summary": "Add a new item",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "item_image": {
+                    "type": "string",
+                    "format": "binary"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
-          "201": {
-            "description": "Created"
+          "200": {
+            "description": "Item added"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/editItem": {
       "put": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "item_name": {
-                  "example": "any"
-                },
-                "price": {
-                  "example": "any"
-                },
-                "stock": {
-                  "example": "any"
-                },
-                "role": {
-                  "example": "any"
+        "summary": "Edit an item",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "item_image": {
+                    "type": "string",
+                    "format": "binary"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Item edited"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/deleteItemImage": {
       "delete": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "imageId": {
-                  "example": "any"
+        "summary": "Delete an item image",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "imageId": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Item image deleted"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/deleteIngredient": {
       "delete": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "ingredientId": {
-                  "example": "any"
+        "summary": "Delete an ingredient",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ingredientId": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Ingredient deleted"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/deleteItem": {
       "delete": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "role": {
-                  "example": "any"
+        "summary": "Delete an item",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "itemId": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Item deleted"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/getCategoryList": {
       "get": {
-        "description": "",
+        "summary": "Get category list",
+        "tags": [
+          "Admin"
+        ],
         "parameters": [
           {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Page number"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Category list"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/getItemList": {
       "get": {
-        "description": "",
+        "summary": "Get item list",
+        "tags": [
+          "Admin"
+        ],
         "parameters": [
           {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
+            "in": "query",
+            "name": "category_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Category ID"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Page number"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Item list"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/getItemDetails": {
       "get": {
-        "description": "",
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/addStaff": {
-      "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "role": {
-                  "example": "any"
-                }
-              }
-            }
-          }
+        "summary": "Get item details",
+        "tags": [
+          "Admin"
         ],
-        "responses": {
-          "201": {
-            "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/editStaffProfile": {
-      "put": {
-        "description": "",
         "parameters": [
           {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "role": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/deleteStaff": {
-      "delete": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "staffMemberId": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/getStaffMemberDetail": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/addTable": {
-      "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "role": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/getTableList": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/removeTable": {
-      "delete": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "role": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/assignWaiterToTables": {
-      "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "role": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/editAssignWaiterToTable": {
-      "put": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "role": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/waitersTableList": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/getProfileDetails": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/getBusinessProfile": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/contactUs": {
-      "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "subjects": {
-                  "example": "any"
-                },
-                "message": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/orderDetails": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "order_id",
             "in": "query",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/orderHistory": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/filter": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "field",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "createdAt",
-            "in": "query",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/addPromoCode": {
-      "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
+            "name": "itemId",
             "schema": {
-              "type": "object",
-              "properties": {
-                "code": {
-                  "example": "any"
-                },
-                "name": {
-                  "example": "any"
-                },
-                "description": {
-                  "example": "any"
-                },
-                "discount": {
-                  "example": "any"
-                },
-                "expiresAt": {
-                  "example": "any"
-                }
-              }
-            }
+              "type": "string"
+            },
+            "required": true,
+            "description": "Item ID"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Item details"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/getPromoCodes": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/deletePromoCode": {
-      "delete": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "promoCode_id": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/notificationList": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/BaristaOrderList": {
       "get": {
-        "description": "",
+        "summary": "Get barista order list",
+        "tags": [
+          "Barista"
+        ],
         "parameters": [
           {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
+            "in": "query",
+            "name": "list_for",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "current_order",
+                "completed_order"
+              ]
+            },
+            "required": true,
+            "description": "List type"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Page number"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
+            "description": "Barista order list"
           },
           "422": {
-            "description": "Unprocessable Entity"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/BaristaOrderAccept": {
       "put": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "order_id": {
-                  "example": "any"
+        "summary": "Accept a barista order",
+        "tags": [
+          "Barista"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
+            "description": "Order accepted"
           },
           "422": {
-            "description": "Unprocessable Entity"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/BaristaOrderMarkAsComplete": {
       "put": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "order_id": {
-                  "example": "any"
+        "summary": "Mark a barista order as complete",
+        "tags": [
+          "Barista"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
+            "description": "Order marked as complete"
           },
           "422": {
-            "description": "Unprocessable Entity"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/waiterOrderList": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/waiterOrderDetails": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "order_id",
-            "in": "query",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/waiterOrderAccept": {
-      "put": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "order_id": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/waiterOrderComplete": {
-      "put": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "order_id": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/waiterAssignedTableList": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/userSignUp": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "username": {
-                  "example": "any"
-                },
-                "email": {
-                  "example": "any"
-                },
-                "password": {
-                  "example": "any"
-                },
-                "device_id": {
-                  "example": "any"
-                },
-                "device_type": {
-                  "example": "any"
-                },
-                "device_token": {
-                  "example": "any"
+        "summary": "User sign up",
+        "tags": [
+          "User"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "device_id": {
+                    "type": "string"
+                  },
+                  "device_type": {
+                    "type": "string"
+                  },
+                  "device_token": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "User signed up"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/personalInformation": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "first_name": {
-                  "example": "any"
-                },
-                "last_name": {
-                  "example": "any"
-                },
-                "country_code": {
-                  "example": "any"
-                },
-                "iso_code": {
-                  "example": "any"
-                },
-                "phone_no": {
-                  "example": "any"
+        "summary": "Add personal information",
+        "tags": [
+          "User"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string"
+                  },
+                  "last_name": {
+                    "type": "string"
+                  },
+                  "country_code": {
+                    "type": "string"
+                  },
+                  "iso_code": {
+                    "type": "string"
+                  },
+                  "phone_no": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Personal information added"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/confirmOrder": {
       "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "role": {
-                  "example": "any"
+        "summary": "Confirm an order",
+        "tags": [
+          "User"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "business_id": {
+                    "type": "string"
+                  },
+                  "total_price": {
+                    "type": "number"
+                  },
+                  "sub_total": {
+                    "type": "number"
+                  },
+                  "discount": {
+                    "type": "number"
+                  },
+                  "taxes": {
+                    "type": "number"
+                  },
+                  "extra_charges": {
+                    "type": "number"
+                  },
+                  "table_id": {
+                    "type": "string"
+                  },
+                  "special_guest": {
+                    "type": "boolean"
+                  },
+                  "orders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "item_id": {
+                          "type": "string"
+                        },
+                        "item_image": {
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "type": "number"
+                        },
+                        "note": {
+                          "type": "string"
+                        },
+                        "price": {
+                          "type": "number"
+                        },
+                        "item_name": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Order confirmed"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/delete_account": {
       "delete": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "emailOrUsername",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "password",
-            "in": "query",
-            "type": "string"
-          }
+        "summary": "Delete user account",
+        "tags": [
+          "User"
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Account deleted"
           },
-          "500": {
-            "description": "Internal Server Error"
+          "400": {
+            "description": "Validation error"
           }
         }
       }
     },
     "/getUserOrderList": {
       "get": {
-        "description": "",
+        "summary": "Get user order list",
+        "tags": [
+          "User"
+        ],
         "parameters": [
           {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
+            "in": "query",
+            "name": "order_status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "in_progress",
+                "complete"
+              ]
+            },
+            "required": true,
+            "description": "Order status"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Page number"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "User order list"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/applyPromoCode": {
       "get": {
-        "description": "",
+        "summary": "Apply promo code",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "code",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Promo code"
+          },
+          {
+            "in": "query",
+            "name": "business_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Business ID"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Promo code applied"
           },
           "400": {
-            "description": "Bad Request"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Validation error"
           }
         }
       }
     },
     "/expensesList": {
       "get": {
-        "description": "",
+        "summary": "Get user expenses list",
+        "tags": [
+          "User"
+        ],
         "parameters": [
           {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "page",
             "in": "query",
-            "type": "string"
+            "name": "page",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Page number"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Expenses list"
           },
           "400": {
-            "description": "Bad Request"
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/waiterOrderList": {
+      "get": {
+        "summary": "Get waiter order list",
+        "tags": [
+          "Waiter"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Page number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waiter order list"
           },
-          "401": {
-            "description": "Unauthorized"
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/waiterOrderDetails": {
+      "get": {
+        "summary": "Get waiter order details",
+        "tags": [
+          "Waiter"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "order_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Order ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waiter order details"
           },
-          "500": {
-            "description": "Internal Server Error"
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/waiterOrderAccept": {
+      "put": {
+        "summary": "Accept waiter order",
+        "tags": [
+          "Waiter"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order accepted"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/waiterOrderComplete": {
+      "put": {
+        "summary": "Complete waiter order",
+        "tags": [
+          "Waiter"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order completed"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/waiterAssignedTableList": {
+      "get": {
+        "summary": "Get waiter assigned table list",
+        "tags": [
+          "Waiter"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Page number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waiter assigned table list"
+          },
+          "400": {
+            "description": "Validation error"
           }
         }
       }
     }
-  }
+  },
+  "components": {},
+  "tags": []
 }

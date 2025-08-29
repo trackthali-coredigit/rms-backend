@@ -1,5 +1,6 @@
-// Swagger configuration for the API
+// This file is only needed if you want to generate swagger.json dynamically from JSDoc comments.
 const swaggerJSDoc = require("swagger-jsdoc");
+const fs = require("fs");
 
 const options = {
 	definition: {
@@ -25,9 +26,9 @@ const options = {
 		"./routers/barista.js",
 		"./routers/user.js",
 		"./routers/waiter.js",
-	], // Path to the API docs
+	],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
-
-module.exports = swaggerSpec;
+fs.writeFileSync("./swagger.json", JSON.stringify(swaggerSpec, null, 2));
+console.log("swagger.json generated!");
