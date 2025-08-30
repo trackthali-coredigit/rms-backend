@@ -18,6 +18,7 @@
         "tags": [
           "SuperAdmin"
         ],
+         "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -1518,6 +1519,18 @@
       }
     }
   },
-  "components": {},
-  "tags": []
+"components": {
+  "securitySchemes": {
+    "bearerAuth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT"
+    }
+  }
+},
+"security": [
+  {
+    "bearerAuth": []
+  }
+]
 }
