@@ -2,33 +2,32 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 //sent otp by email
-   //1 create email transporter
-   const transporter = nodemailer.createTransport({
-    pool: true,
-    host: process.env.SMTP_HOST,
-    // port: process.env.SMTP_PORT,
-    // service : 'gmail',
-    auth : {
-        user : process.env.SMTP_MAIL ,
-        pass : process.env.SMTP_PASSWORD
-    },
-    secure: false, // Use TLS but don't verify certificates
-    tls: {
-    rejectUnauthorized: false // Don't fail on invalid certs
-}
-    // authMethod: 'LOGIN', // Explicitly set the authentication method
-})
+//1 create email transporter
+const transporter = nodemailer.createTransport({
+	pool: true,
+	// host: process.env.SMTP_HOST,
+	// port: process.env.SMTP_PORT,
+	service: "gmail",
+	auth: {
+		user: process.env.SMTP_MAIL,
+		pass: process.env.SMTP_PASSWORD,
+	},
+	secure: false, // Use TLS but don't verify certificates
+	tls: {
+		rejectUnauthorized: false, // Don't fail on invalid certs
+	}
+	// authMethod: 'LOGIN', // Explicitly set the authentication method
+});
 
-const sendOTPByEmail = (email,otp,fullName) => {
-    try{
- 
-    //2.configure email content
-    const mailOptions ={
-        from :process.env.SMTP_MAIL,
-        to   :  email,
-        subject :  "OTP Verification",
-        // text : `Your OTP for email verification is: ${otp}`,
-        html:`<body style="font-family: Helvetica, Arial, sans-serif; margin: 0px; padding: 0px; background-color: #ffffff;">
+const sendOTPByEmail = (email, otp, fullName) => {
+	try {
+		//2.configure email content
+		const mailOptions = {
+			from: process.env.SMTP_MAIL,
+			to: email,
+			subject: "OTP Verification",
+			// text : `Your OTP for email verification is: ${otp}`,
+			html: `<body style="font-family: Helvetica, Arial, sans-serif; margin: 0px; padding: 0px; background-color: #ffffff;">
         <table role="presentation"
           style="width: 100%; border-collapse: collapse; border: 0px; border-spacing: 0px; font-family: Arial, Helvetica, sans-serif; background-color: rgb(239, 239, 239);">
           <tbody>
@@ -61,33 +60,31 @@ const sendOTPByEmail = (email,otp,fullName) => {
           </tbody>
         </table>
       </body>`,
-    }
+		};
 
-    //3.send email
-   transporter.sendMail(mailOptions, (error,info)=>{
-    if(error) {
-        console.error("Error sending emailxx:", error);
-    }else{
-        console.log("Email sent:", info.response);
-    }
-  });
-}catch(error){
-    console.error("Error sending email!(try catch block):", error);
-    throw error; // rethrow the error to be caught in the calling function
-}
+		//3.send email
+		transporter.sendMail(mailOptions, (error, info) => {
+			if (error) {
+				console.error("Error sending emailxx:", error);
+			} else {
+				console.log("Email sent:", info.response);
+			}
+		});
+	} catch (error) {
+		console.error("Error sending email!(try catch block):", error);
+		throw error; // rethrow the error to be caught in the calling function
+	}
 };
 
-
 const sendContactUsEmail = (userDetails) => {
-  try{
-
-  //2.configure email content
-  const mailOptions ={
-      from :process.env.SMTP_MAIL,
-      to   : userDetails.email,
-      subject :  "Contact US",
-      // text : `Your OTP for email verification is: ${otp}`,
-      html:`<body style="font-family: Helvetica, Arial, sans-serif; margin: 0px; padding: 0px; background-color: #ffffff;">
+	try {
+		//2.configure email content
+		const mailOptions = {
+			from: process.env.SMTP_MAIL,
+			to: userDetails.email,
+			subject: "Contact US",
+			// text : `Your OTP for email verification is: ${otp}`,
+			html: `<body style="font-family: Helvetica, Arial, sans-serif; margin: 0px; padding: 0px; background-color: #ffffff;">
       <table role="presentation"
         style="width: 100%; border-collapse: collapse; border: 0px; border-spacing: 0px; font-family: Arial, Helvetica, sans-serif; background-color: rgb(239, 239, 239);">
         <tbody>
@@ -118,14 +115,14 @@ const sendContactUsEmail = (userDetails) => {
         </tbody>
       </table>
     </body>`,
-  }
-  const mailOptions2 ={
-    from :process.env.SMTP_MAIL,
-    to   : "contact_mabo@mammoth.al",
-    // to:"kirtanwyn@gmail.com",
-    subject :  "Contact US",
-    // text : `Your OTP for email verification is: ${otp}`,
-    html:`<body style="font-family: Helvetica, Arial, sans-serif; margin: 0px; padding: 0px; background-color: #ffffff;">
+		};
+		const mailOptions2 = {
+			from: process.env.SMTP_MAIL,
+			to: "contact_mabo@mammoth.al",
+			// to:"kirtanwyn@gmail.com",
+			subject: "Contact US",
+			// text : `Your OTP for email verification is: ${otp}`,
+			html: `<body style="font-family: Helvetica, Arial, sans-serif; margin: 0px; padding: 0px; background-color: #ffffff;">
     <table role="presentation"
       style="width: 100%; border-collapse: collapse; border: 0px; border-spacing: 0px; font-family: Arial, Helvetica, sans-serif; background-color: rgb(239, 239, 239);">
       <tbody>
@@ -160,27 +157,25 @@ const sendContactUsEmail = (userDetails) => {
       </tbody>
     </table>
   </body>`,
-}
-  //3.send email
- transporter.sendMail(mailOptions, (error,info)=>{
-  if(error) {
-      console.error("Error sending emailxx:", error);
-  }else{
-      console.log("Email sent:", info.response);
-  }
-  
-});
-transporter.sendMail(mailOptions2, (error,info)=>{
-  if(error) {
-      console.error("Error sending emailxx:", error);
-  }else{
-      console.log("Email sent:", info.response);
-  }
-  
-});
-}catch(error){
-  console.error("Error sending email!(try catch block):", error);
-  throw error; // rethrow the error to be caught in the calling function
-}
+		};
+		//3.send email
+		transporter.sendMail(mailOptions, (error, info) => {
+			if (error) {
+				console.error("Error sending emailxx:", error);
+			} else {
+				console.log("Email sent:", info.response);
+			}
+		});
+		transporter.sendMail(mailOptions2, (error, info) => {
+			if (error) {
+				console.error("Error sending emailxx:", error);
+			} else {
+				console.log("Email sent:", info.response);
+			}
+		});
+	} catch (error) {
+		console.error("Error sending email!(try catch block):", error);
+		throw error; // rethrow the error to be caught in the calling function
+	}
 };
-module.exports = { sendOTPByEmail ,sendContactUsEmail} 
+module.exports = { sendOTPByEmail, sendContactUsEmail };
