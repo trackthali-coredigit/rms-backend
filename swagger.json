@@ -629,55 +629,6 @@
         }
       }
     },
-    "/businessHours": {
-      "post": {
-        "summary": "Set business hours",
-        "tags": [
-          "Admin"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "day": {
-                    "type": "string"
-                  },
-                  "opening_hours": {
-                    "type": "string"
-                  },
-                  "closing_hours": {
-                    "type": "string"
-                  },
-                  "day_status": {
-                    "type": "boolean"
-                  },
-                  "value": {
-                    "type": "string",
-                    "enum": [
-                      "is_all",
-                      "is_create",
-                      "is_edit",
-                      "is_get"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Business hours set"
-          },
-          "400": {
-            "description": "Validation error"
-          }
-        }
-      }
-    },
     "/addCategory": {
       "post": {
         "summary": "Add a new category",
@@ -767,6 +718,33 @@
         "responses": {
           "200": {
             "description": "Category deleted"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/getCategoryList": {
+      "get": {
+        "summary": "Get category list",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Page number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category list"
           },
           "400": {
             "description": "Validation error"
@@ -924,33 +902,6 @@
         "responses": {
           "200": {
             "description": "Item deleted"
-          },
-          "400": {
-            "description": "Validation error"
-          }
-        }
-      }
-    },
-    "/getCategoryList": {
-      "get": {
-        "summary": "Get category list",
-        "tags": [
-          "Admin"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "description": "Page number"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Category list"
           },
           "400": {
             "description": "Validation error"
@@ -1441,6 +1392,55 @@
           },
           "500": {
             "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/businessHours": {
+      "post": {
+        "summary": "Set business hours",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "day": {
+                    "type": "string"
+                  },
+                  "opening_hours": {
+                    "type": "string"
+                  },
+                  "closing_hours": {
+                    "type": "string"
+                  },
+                  "day_status": {
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "type": "string",
+                    "enum": [
+                      "is_all",
+                      "is_create",
+                      "is_edit",
+                      "is_get"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Business hours set"
+          },
+          "400": {
+            "description": "Validation error"
           }
         }
       }

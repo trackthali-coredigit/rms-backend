@@ -15,6 +15,7 @@ let validation = (req, res, next) => {
 };
 const admin = require("../controllers/admin");
 
+// ------------------------------------------------Auth Routes------------------------------------------------//
 /**
  * @swagger
  * /signin:
@@ -332,94 +333,7 @@ router.post(
 	admin.signOut
 );
 
-/**
- * @swagger
- * /businessHours:
- *   post:
- *     summary: Set business hours
- *     tags: [Admin]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               day:
- *                 type: string
- *               opening_hours:
- *                 type: string
- *               closing_hours:
- *                 type: string
- *               day_status:
- *                 type: boolean
- *               value:
- *                 type: string
- *                 enum: [is_all, is_create, is_edit, is_get]
- *     responses:
- *       200:
- *         description: Business hours set
- *       400:
- *         description: Validation error
- */
-router.post(
-	"/businessHours",
-	[
-		check("day").not().isEmpty().withMessage("Day is required").trim().escape(),
-		check("opening_hours")
-			.not()
-			.isEmpty()
-			.withMessage("Opening hours are required")
-			.trim()
-			.escape(),
-		check("closing_hours")
-			.not()
-			.isEmpty()
-			.withMessage("Closing hours are required")
-			.trim()
-			.escape(),
-		check("day_status")
-			.isBoolean()
-			.withMessage("Day status must be a boolean value")
-			.trim()
-			.escape(),
-		check("value")
-			.isIn(["is_all", "is_create", "is_edit", "is_get"])
-			.withMessage("Invalid value for 'value' parameter")
-			.trim()
-			.escape(),
-	],
-	validation,
-	authMiddleware,
-	admin.businessHours
-);
-
-/**
- * @swagger
- * /otp_verify:
- *   post:
- *     summary: Verify OTP for admin
- *     tags: [Admin]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               emailOrUsername:
- *                 type: string
- *               otp:
- *                 type: string
- *               role:
- *                 type: string
- *     responses:
- *       200:
- *         description: OTP verified
- *       400:
- *         description: Validation error
- */
-
+//------------------------------------------------Category Routes------------------------------------------------//
 /**
  * @swagger
  * /addCategory:
@@ -479,6 +393,7 @@ router.post(
  *       400:
  *         description: Validation error
  */
+
 router.put(
 	"/editCategory",
 	[
@@ -536,6 +451,34 @@ router.delete(
 	admin.deleteCategory
 );
 
+/**
+ * @swagger
+ * /getCategoryList:
+ *   get:
+ *     summary: Get category list
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Page number
+ *     responses:
+ *       200:
+ *         description: Category list
+ *       400:
+ *         description: Validation error
+ */
+
+router.get(
+	"/getCategoryList",
+	[check("page").notEmpty().withMessage("page is required")],
+	validation,
+	admin.getCategoryList
+);
+
+//------------------------------------------------Items Routes------------------------------------------------//
 /**
  * @swagger
  * /addItem:
@@ -605,6 +548,7 @@ router.post(
 	authMiddleware,
 	admin.addItem
 );
+
 /**
  * @swagger
  * /editItem:
@@ -634,6 +578,7 @@ router.put(
 	authMiddleware,
 	admin.editItem
 );
+
 /**
  * @swagger
  * /deleteItemImage:
@@ -670,6 +615,7 @@ router.delete(
 	validation,
 	admin.deleteItemImage
 );
+
 /**
  * @swagger
  * /deleteIngredient:
@@ -706,6 +652,7 @@ router.delete(
 	validation,
 	admin.deleteIngredient
 );
+
 /**
  * @swagger
  * /deleteItem:
@@ -742,31 +689,6 @@ router.delete(
 	validation,
 	authMiddleware,
 	admin.deleteItem
-);
-/**
- * @swagger
- * /getCategoryList:
- *   get:
- *     summary: Get category list
- *     tags: [Admin]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: string
- *         required: true
- *         description: Page number
- *     responses:
- *       200:
- *         description: Category list
- *       400:
- *         description: Validation error
- */
-router.get(
-	"/getCategoryList",
-	[check("page").notEmpty().withMessage("page is required")],
-	validation,
-	admin.getCategoryList
 );
 
 /**
@@ -830,6 +752,7 @@ router.get(
  *       400:
  *         description: Validation error
  */
+
 router.get(
 	"/getItemDetails",
 	[
@@ -846,6 +769,7 @@ router.get(
 	admin.getItemDetails
 );
 
+//------------------------------------------------Staff Routes------------------------------------------------//
 /**
  * @swagger
  * /addStaff:
@@ -989,21 +913,7 @@ router.post(
 	authMiddleware,
 	admin.getStaffList
 );
-router.get(
-	"/getStaffList",
-	[
-		check("role")
-			.not()
-			.isEmpty()
-			.withMessage("Role is required")
-			.isIn(["waiter", "barista", "supervisor"])
-			.withMessage("Invalid role"),
-		check("page").notEmpty().withMessage("page is required"),
-	],
-	validation,
-	authMiddleware,
-	admin.getStaffList
-);
+
 /**
  * @swagger
  * /editStaffProfile:
@@ -1049,6 +959,7 @@ router.put(
 	authMiddleware,
 	admin.editStaffProfile
 );
+
 /**
  * @swagger
  * /deleteStaff:
@@ -1117,6 +1028,7 @@ router.get(
 	admin.getStaffMemberDetail
 );
 
+//------------------------------------------------Table Routes------------------------------------------------//
 /**
  * @swagger
  * /addTable:
@@ -1356,6 +1268,8 @@ router.get(
 	admin.waitersTableList
 );
 
+//------------------------------------------------Profile Routes------------------------------------------------//
+
 /**
  * @swagger
  * /getProfileDetails:
@@ -1372,6 +1286,7 @@ router.get(
  */
 router.get("/getProfileDetails", authMiddleware, admin.getProfileDetails);
 
+//------------------------------------------------Bussiness Profile Routes------------------------------------------------//
 /**
  * @swagger
  * /getBusinessProfile:
@@ -1386,8 +1301,72 @@ router.get("/getProfileDetails", authMiddleware, admin.getProfileDetails);
  *       500:
  *         description: Internal server error
  */
+
 router.get("/getBusinessProfile", authMiddleware, admin.getBusinessProfile);
 
+/**
+ * @swagger
+ * /businessHours:
+ *   post:
+ *     summary: Set business hours
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               day:
+ *                 type: string
+ *               opening_hours:
+ *                 type: string
+ *               closing_hours:
+ *                 type: string
+ *               day_status:
+ *                 type: boolean
+ *               value:
+ *                 type: string
+ *                 enum: [is_all, is_create, is_edit, is_get]
+ *     responses:
+ *       200:
+ *         description: Business hours set
+ *       400:
+ *         description: Validation error
+ */
+router.post(
+	"/businessHours",
+	[
+		check("day").not().isEmpty().withMessage("Day is required").trim().escape(),
+		check("opening_hours")
+			.not()
+			.isEmpty()
+			.withMessage("Opening hours are required")
+			.trim()
+			.escape(),
+		check("closing_hours")
+			.not()
+			.isEmpty()
+			.withMessage("Closing hours are required")
+			.trim()
+			.escape(),
+		check("day_status")
+			.isBoolean()
+			.withMessage("Day status must be a boolean value")
+			.trim()
+			.escape(),
+		check("value")
+			.isIn(["is_all", "is_create", "is_edit", "is_get"])
+			.withMessage("Invalid value for 'value' parameter")
+			.trim()
+			.escape(),
+	],
+	validation,
+	authMiddleware,
+	admin.businessHours
+);
+
+//------------------------------------------------Contact Us Routes------------------------------------------------//
 /**
  * @swagger
  * /contactUs:
@@ -1434,6 +1413,7 @@ router.post(
 	admin.contactUs
 );
 
+//------------------------------------------------Order Routes------------------------------------------------//
 /**
  * @swagger
  * /orderDetails:
@@ -1508,6 +1488,7 @@ router.get(
 	admin.orderHistory
 );
 
+//------------------------------------------------Filter Routes------------------------------------------------//
 /**
  * @swagger
  * /filter:
@@ -1540,6 +1521,7 @@ router.get(
  */
 router.get("/filter", authMiddleware, admin.filter);
 
+// ------------------------------------------------Promo Code Routes------------------------------------------------//
 /**
  * @swagger
  * /addPromoCode:
@@ -1683,6 +1665,7 @@ router.delete(
 	admin.deletePromoCode
 );
 
+// ------------------------------------------------Notification Routes------------------------------------------------//
 /**
  * @swagger
  * /notificationList:
@@ -1717,5 +1700,6 @@ router.get(
 	authMiddleware,
 	admin.notificationList
 );
+
 console.log("im out of admin.js router");
 module.exports = router;
