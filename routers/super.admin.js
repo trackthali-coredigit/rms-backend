@@ -429,7 +429,7 @@ router.get(
 );
 /**
  * @swagger
- * /getStaffList:
+ * /getAdminStaffList:
  *   get:
  *     summary: Get staff list
  *     tags: [SuperAdmin]
@@ -459,7 +459,7 @@ router.get(
  *         description: Validation error
  */
 router.get(
-	"/getStaffList",
+	"/getAdminStaffList",
 	[
 		check("page")
 			.not()

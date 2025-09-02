@@ -365,31 +365,6 @@ router.post(
 router.post(
 	"/businessHours",
 	[
-		/**
-		 * @swagger
-		 * /otp_verify:
-		 *   post:
-		 *     summary: Verify OTP for admin
-		 *     tags: [Admin]
-		 *     requestBody:
-		 *       required: true
-		 *       content:
-		 *         application/json:
-		 *           schema:
-		 *             type: object
-		 *             properties:
-		 *               emailOrUsername:
-		 *                 type: string
-		 *               otp:
-		 *                 type: string
-		 *               role:
-		 *                 type: string
-		 *     responses:
-		 *       200:
-		 *         description: OTP verified
-		 *       400:
-		 *         description: Validation error
-		 */
 		check("day").not().isEmpty().withMessage("Day is required").trim().escape(),
 		check("opening_hours")
 			.not()
@@ -418,6 +393,32 @@ router.post(
 	authMiddleware,
 	admin.businessHours
 );
+
+/**
+ * @swagger
+ * /otp_verify:
+ *   post:
+ *     summary: Verify OTP for admin
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               emailOrUsername:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP verified
+ *       400:
+ *         description: Validation error
+ */
 
 /**
  * @swagger
@@ -454,6 +455,51 @@ router.post(
 	authMiddleware,
 	admin.addCategory
 );
+
+/**
+ * @swagger
+ * /editCategory:
+ *   put:
+ *     summary: Edit a category
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               category_id:
+ *                 type: string
+ *               category_name:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Category edited
+ *       400:
+ *         description: Validation error
+ */
+router.put(
+	"/editCategory",
+	[
+		check("category_id")
+			.not()
+			.isEmpty()
+			.withMessage("Category ID is required")
+			.trim()
+			.escape(),
+		check("category_name")
+			.not()
+			.isEmpty()
+			.withMessage("Category name is required")
+			.trim()
+			.escape(),
+	],
+	validation,
+	authMiddleware,
+	admin.editCategory
+);
+
 /**
  * @swagger
  * /deleteCategory:
@@ -799,6 +845,42 @@ router.get(
 	validation,
 	admin.getItemDetails
 );
+
+/**
+ * @swagger
+ * /addStaff:
+ *   post:
+ *     summary: Add a new staff member
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *               last_name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone_no:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *               country_code:
+ *                 type: string
+ *               iso_code:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Staff member added successfully
+ *       400:
+ *         description: Validation error
+ */
 router.post(
 	"/addStaff",
 	[
@@ -866,6 +948,47 @@ router.post(
 	authMiddleware,
 	admin.addStaff
 );
+
+/**
+ * @swagger
+ * /getStaffList:
+ *   post:
+ *     summary: Get a list of staff members
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role:
+ *                 type: string
+ *                 description: Role of the staff members to retrieve
+ *               page:
+ *                 type: integer
+ *                 description: Page number
+ *     responses:
+ *       200:
+ *         description: Staff list
+ *       400:
+ *         description: Validation error
+ */
+router.post(
+	"/getStaffList",
+	[
+		check("role")
+			.not()
+			.isEmpty()
+			.withMessage("Role is required")
+			.isIn(["waiter", "barista", "supervisor"])
+			.withMessage("Invalid role"),
+		check("page").notEmpty().withMessage("page is required"),
+	],
+	validation,
+	authMiddleware,
+	admin.getStaffList
+);
 router.get(
 	"/getStaffList",
 	[
@@ -881,7 +1004,70 @@ router.get(
 	authMiddleware,
 	admin.getStaffList
 );
-router.put("/editStaffProfile", authMiddleware, admin.editStaffProfile);
+/**
+ * @swagger
+ * /editStaffProfile:
+ *   put:
+ *     summary: Edit staff profile
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *               last_name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone_no:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *               staffMemberId:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Staff profile updated successfully
+ *       400:
+ *         description: Validation error
+ */
+router.put(
+	"/editStaffProfile",
+	[
+		check("staffMemberId")
+			.not()
+			.isEmpty()
+			.withMessage("Staff member ID is required")
+			.isNumeric()
+			.withMessage("Staff member ID must be a number"),
+	],
+	validation,
+	authMiddleware,
+	admin.editStaffProfile
+);
+/**
+ * @swagger
+ * /deleteStaff:
+ *   delete:
+ *     summary: Delete a staff member
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: staffMemberId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID of the staff member to delete
+ *     responses:
+ *       200:
+ *         description: Staff member deleted successfully
+ *       400:
+ *         description: Validation error
+ */
 router.delete(
 	"/deleteStaff",
 	[
@@ -896,6 +1082,26 @@ router.delete(
 	authMiddleware,
 	admin.deleteStaff
 );
+
+/**
+ * @swagger
+ * /getStaffMemberDetail:
+ *   get:
+ *     summary: Get staff member details
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: staffMemberId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID of the staff member to retrieve
+ *     responses:
+ *       200:
+ *         description: Staff member details
+ *       400:
+ *         description: Validation error
+ */
 router.get(
 	"/getStaffMemberDetail",
 	[
@@ -910,6 +1116,28 @@ router.get(
 	authMiddleware,
 	admin.getStaffMemberDetail
 );
+
+/**
+ * @swagger
+ * /addTable:
+ *   post:
+ *     summary: Add a new table
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               table_no:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Table added successfully
+ *       400:
+ *         description: Validation error
+ */
 router.post(
 	"/addTable",
 	[
@@ -926,6 +1154,26 @@ router.post(
 	authMiddleware,
 	admin.addTable
 );
+
+/**
+ * @swagger
+ * /getTableList:
+ *   get:
+ *     summary: Get a list of tables
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Page number for pagination
+ *     responses:
+ *       200:
+ *         description: List of tables
+ *       400:
+ *         description: Validation error
+ */
 router.get(
 	"/getTableList",
 	[check("page").notEmpty().withMessage("page is required")],
@@ -933,6 +1181,26 @@ router.get(
 	authMiddleware,
 	admin.getTableList
 );
+
+/**
+ * @swagger
+ * /removeTable:
+ *   delete:
+ *     summary: Remove a table
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: table_ids
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Comma-separated list of table IDs to remove
+ *     responses:
+ *       200:
+ *         description: Table removed successfully
+ *       400:
+ *         description: Validation error
+ */
 router.delete(
 	"/removeTable",
 	[
@@ -947,6 +1215,30 @@ router.delete(
 	authMiddleware,
 	admin.removeTable
 );
+
+/**
+ * @swagger
+ * /assignWaiterToTables:
+ *   post:
+ *     summary: Assign a waiter to multiple tables
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *               table_ids:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Waiter assigned to tables successfully
+ *       400:
+ *         description: Validation error
+ */
 router.post(
 	"/assignWaiterToTables",
 	[
@@ -967,6 +1259,31 @@ router.post(
 	authMiddleware,
 	admin.assignWaiterToTables
 );
+
+/**
+ * @swagger
+ * /editAssignWaiterToTable:
+ *   put:
+ *     summary: Edit waiter assignment to a table
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *               table_ids:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Waiter assignment updated successfully
+ *       400:
+ *         description: Validation error
+ */
+
 router.put(
 	"/editAssignWaiterToTable",
 	[
@@ -990,6 +1307,38 @@ router.put(
 	authMiddleware,
 	admin.editAssignWaiterToTable
 );
+
+/**
+ * @swagger
+ * /waitersTableList:
+ *   get:
+ *     summary: Get a list of tables assigned to a waiter
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: waiterId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID of the waiter to retrieve tables for
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Page number for pagination
+ *     responses:
+ *       200:
+ *         description: List of tables assigned to the waiter
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Waiter not found
+ *       500:
+ *         description: Internal server error
+ *       default:
+ *         description: Unexpected error
+ */
 router.get(
 	"/waitersTableList",
 	[
@@ -1007,8 +1356,63 @@ router.get(
 	admin.waitersTableList
 );
 
+/**
+ * @swagger
+ * /getProfileDetails:
+ *   get:
+ *     summary: Get profile details
+ *     tags: [Admin]
+ *     responses:
+ *       200:
+ *         description: Profile details retrieved successfully
+ *       404:
+ *         description: Profile not found
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/getProfileDetails", authMiddleware, admin.getProfileDetails);
+
+/**
+ * @swagger
+ * /getBusinessProfile:
+ *   get:
+ *     summary: Get business profile details
+ *     tags: [Admin]
+ *     responses:
+ *       200:
+ *         description: Business profile details retrieved successfully
+ *       404:
+ *         description: Business profile not found
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/getBusinessProfile", authMiddleware, admin.getBusinessProfile);
+
+/**
+ * @swagger
+ * /contactUs:
+ *   post:
+ *     summary: Contact support
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               subjects:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Message sent successfully
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
+ */
 router.post(
 	"/contactUs",
 	[
@@ -1030,6 +1434,27 @@ router.post(
 	admin.contactUs
 );
 
+/**
+ * @swagger
+ * /orderDetails:
+ *   get:
+ *     summary: Get order details
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: order_id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID of the order to retrieve details for
+ *     responses:
+ *       200:
+ *         description: Order details retrieved successfully
+ *       404:
+ *         description: Order not found
+ *       500:
+ *         description: Internal server error
+ */
 router.get(
 	"/orderDetails",
 	[
@@ -1047,6 +1472,27 @@ router.get(
 	admin.orderDetails
 );
 
+/**
+ * @swagger
+ * /orderHistory:
+ *   get:
+ *     summary: Get order history
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Page number for pagination
+ *     responses:
+ *       200:
+ *         description: Order history retrieved successfully
+ *       404:
+ *         description: No orders found
+ *       500:
+ *         description: Internal server error
+ */
 router.get(
 	"/orderHistory",
 	[
@@ -1061,7 +1507,71 @@ router.get(
 	authMiddleware,
 	admin.orderHistory
 );
+
+/**
+ * @swagger
+ * /filter:
+ *   get:
+ *     summary: Filter orders
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Filter by order status
+ *       - in: query
+ *         name: dateRange
+ *         schema:
+ *           type: array
+ *           items:
+ *             type: string
+ *             format: date
+ *         required: false
+ *         description: Filter by date range
+ *     responses:
+ *       200:
+ *         description: Orders filtered successfully
+ *       404:
+ *         description: No orders found
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/filter", authMiddleware, admin.filter);
+
+/**
+ * @swagger
+ * /addPromoCode:
+ *   post:
+ *     summary: Add a new promo code
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               discount:
+ *                 type: number
+ *               expiresAt:
+ *                 type: string
+ *                 format: date
+ *     responses:
+ *       201:
+ *         description: Promo code created successfully
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
+ */
 router.post(
 	"/addPromoCode",
 	// [
@@ -1100,6 +1610,28 @@ router.post(
 	authMiddleware,
 	admin.addPromoCode
 );
+
+/**
+ * @swagger
+ * /getPromoCodes:
+ *   get:
+ *     summary: Get a list of promo codes
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Page number for pagination
+ *     responses:
+ *       200:
+ *         description: Promo codes retrieved successfully
+ *       404:
+ *         description: No promo codes found
+ *       500:
+ *         description: Internal server error
+ */
 router.get(
 	"/getPromoCodes",
 	[
@@ -1114,6 +1646,28 @@ router.get(
 	authMiddleware,
 	admin.getPromoCodes
 );
+
+/**
+ * @swagger
+ * /deletePromoCode:
+ *   delete:
+ *     summary: Delete a promo code
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: promoCode_id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID of the promo code to delete
+ *     responses:
+ *       200:
+ *         description: Promo code deleted successfully
+ *       404:
+ *         description: Promo code not found
+ *       500:
+ *         description: Internal server error
+ */
 router.delete(
 	"/deletePromoCode",
 	[
@@ -1128,6 +1682,28 @@ router.delete(
 	authMiddleware,
 	admin.deletePromoCode
 );
+
+/**
+ * @swagger
+ * /notificationList:
+ *   get:
+ *     summary: Get a list of notifications
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Page number for pagination
+ *     responses:
+ *       200:
+ *         description: Notifications retrieved successfully
+ *       404:
+ *         description: No notifications found
+ *       500:
+ *         description: Internal server error
+ */
 router.get(
 	"/notificationList",
 	[

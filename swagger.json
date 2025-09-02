@@ -18,7 +18,7 @@
         "tags": [
           "SuperAdmin"
         ],
-         "security": [],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -228,7 +228,7 @@
         }
       }
     },
-    "/getStaffList": {
+    "/getAdminStaffList": {
       "get": {
         "summary": "Get staff list",
         "tags": [
@@ -709,6 +709,40 @@
         }
       }
     },
+    "/editCategory": {
+      "put": {
+        "summary": "Edit a category",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category_id": {
+                    "type": "string"
+                  },
+                  "category_name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Category edited"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
     "/deleteCategory": {
       "delete": {
         "summary": "Delete a category",
@@ -983,6 +1017,707 @@
           },
           "400": {
             "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/addStaff": {
+      "post": {
+        "summary": "Add a new staff member",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string"
+                  },
+                  "last_name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "phone_no": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "country_code": {
+                    "type": "string"
+                  },
+                  "iso_code": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Staff member added successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/getStaffList": {
+      "post": {
+        "summary": "Get a list of staff members",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "description": "Role of the staff members to retrieve"
+                  },
+                  "page": {
+                    "type": "integer",
+                    "description": "Page number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Staff list"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/editStaffProfile": {
+      "put": {
+        "summary": "Edit staff profile",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string"
+                  },
+                  "last_name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "phone_no": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "staffMemberId": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Staff profile updated successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/deleteStaff": {
+      "delete": {
+        "summary": "Delete a staff member",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "staffMemberId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID of the staff member to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Staff member deleted successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/getStaffMemberDetail": {
+      "get": {
+        "summary": "Get staff member details",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "staffMemberId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID of the staff member to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Staff member details"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/addTable": {
+      "post": {
+        "summary": "Add a new table",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "table_no": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Table added successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/getTableList": {
+      "get": {
+        "summary": "Get a list of tables",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Page number for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tables"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/removeTable": {
+      "delete": {
+        "summary": "Remove a table",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "table_ids",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Comma-separated list of table IDs to remove"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Table removed successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/assignWaiterToTables": {
+      "post": {
+        "summary": "Assign a waiter to multiple tables",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "integer"
+                  },
+                  "table_ids": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Waiter assigned to tables successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/editAssignWaiterToTable": {
+      "put": {
+        "summary": "Edit waiter assignment to a table",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "integer"
+                  },
+                  "table_ids": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Waiter assignment updated successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/waitersTableList": {
+      "get": {
+        "summary": "Get a list of tables assigned to a waiter",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "waiterId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID of the waiter to retrieve tables for"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Page number for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tables assigned to the waiter"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "404": {
+            "description": "Waiter not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "default": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/getProfileDetails": {
+      "get": {
+        "summary": "Get profile details",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile details retrieved successfully"
+          },
+          "404": {
+            "description": "Profile not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/getBusinessProfile": {
+      "get": {
+        "summary": "Get business profile details",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Business profile details retrieved successfully"
+          },
+          "404": {
+            "description": "Business profile not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/contactUs": {
+      "post": {
+        "summary": "Contact support",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "subjects": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/orderDetails": {
+      "get": {
+        "summary": "Get order details",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "order_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID of the order to retrieve details for"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order details retrieved successfully"
+          },
+          "404": {
+            "description": "Order not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/orderHistory": {
+      "get": {
+        "summary": "Get order history",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Page number for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order history retrieved successfully"
+          },
+          "404": {
+            "description": "No orders found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/filter": {
+      "get": {
+        "summary": "Filter orders",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Filter by order status"
+          },
+          {
+            "in": "query",
+            "name": "dateRange",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "required": false,
+            "description": "Filter by date range"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Orders filtered successfully"
+          },
+          "404": {
+            "description": "No orders found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/addPromoCode": {
+      "post": {
+        "summary": "Add a new promo code",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "discount": {
+                    "type": "number"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Promo code created successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/getPromoCodes": {
+      "get": {
+        "summary": "Get a list of promo codes",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Page number for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Promo codes retrieved successfully"
+          },
+          "404": {
+            "description": "No promo codes found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/deletePromoCode": {
+      "delete": {
+        "summary": "Delete a promo code",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "promoCode_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the promo code to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Promo code deleted successfully"
+          },
+          "404": {
+            "description": "Promo code not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/notificationList": {
+      "get": {
+        "summary": "Get a list of notifications",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Page number for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifications retrieved successfully"
+          },
+          "404": {
+            "description": "No notifications found"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         }
       }

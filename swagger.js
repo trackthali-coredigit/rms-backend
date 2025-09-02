@@ -12,9 +12,22 @@ const options = {
 		},
 		servers: [
 			{
-				// Add Env Swagger End Point
 				url: "http://127.0.0.1:9000",
 				description: "Local server",
+			},
+		],
+		components: {
+			securitySchemes: {
+				bearerAuth: {
+					type: "http",
+					scheme: "bearer",
+					bearerFormat: "JWT",
+				},
+			},
+		},
+		security: [
+			{
+				bearerAuth: [],
 			},
 		],
 	},
