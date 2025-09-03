@@ -747,26 +747,26 @@ const addItem = async (req, res) => {
 			},
 		});
 		console.log(">>>>>>>>>>>", users);
-		const usersArray = [];
-		const message = `A new item has been added`;
-		const data = {
-			item_id: item.item_id,
-			notification_type: "New Item",
-		};
+		// const usersArray = [];
+		// const message = `A new item has been added`;
+		// const data = {
+		// 	item_id: item.item_id,
+		// 	notification_type: "New Item",
+		// };
 
-		const notifications = users.map((user) => {
-			usersArray.push(user.dataValues.user_id);
-			return {
-				notification_from: req.userData.user_id,
-				notification_to: user.user_id,
-				title: "New Item",
-				notification_message: "A new item has been added",
-				notification_type: "New Item",
-			};
-		});
-		console.log(">>>>>>>>>>>>usersArray", usersArray);
-		const created = await db.Notification.bulkCreate(notifications);
-		await sendNotification(usersArray, message, data);
+		// const notifications = users.map((user) => {
+		// 	usersArray.push(user.dataValues.user_id);
+		// 	return {
+		// 		notification_from: req.userData.user_id,
+		// 		notification_to: user.user_id,
+		// 		title: "New Item",
+		// 		notification_message: "A new item has been added",
+		// 		notification_type: "New Item",
+		// 	};
+		// });
+		// console.log(">>>>>>>>>>>>usersArray", usersArray);
+		// const created = await db.Notification.bulkCreate(notifications);
+		// await sendNotification(usersArray, message, data);
 		res.status(201).json({ Status: 1, message: "The Item added successfully" });
 	} catch (error) {
 		console.error("Error adding item:", error);
@@ -789,9 +789,9 @@ const editItem = async (req, res) => {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
 
-		const { itemId, item_name, price, stock, ingredients } = req.body;
+		const { item_id, item_name, price, stock, ingredients } = req.body;
 
-		const item = await db.Items.findByPk(itemId);
+		const item = await db.Items.findByPk(item_id);
 		if (!item) {
 			return res.status(404).json({ Status: 0, message: "The Item not found" });
 		}
@@ -1049,10 +1049,11 @@ const getCategoryList = async (req, res) => {
 };
 const getItemList = async (req, res) => {
 	try {
-		let { category_id, page, business_id } = req.body;
+		let { category_id, page, business_id } = req.query;
 		const pageSize = 20;
 		let whereClause;
 
+		console.log(req.query, "Fetching item list with filters:", req.body);
 		const authHeader = req.headers["authorization"];
 		if (!!authHeader) {
 			const token = req.headers["authorization"].split(" ")[1];
@@ -1129,7 +1130,7 @@ const getItemList = async (req, res) => {
 				},
 				{
 					model: db.Item_Img,
-					required: true,
+					// required: true,
 				},
 				{
 					model: db.Ingrediant,
@@ -1160,14 +1161,14 @@ const getItemList = async (req, res) => {
 };
 const getItemDetails = async (req, res) => {
 	try {
-		const { itemId } = req.body;
+		const { itemId } = req.query;
 
 		const itemList = await db.Items.findAll({
 			where: { item_id: itemId },
 			include: [
 				{
 					model: db.Item_Img,
-					required: true,
+					// required: true,
 				},
 				{
 					model: db.Ingrediant,
@@ -1621,8 +1622,8 @@ const removeTable = async (req, res) => {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
 
-		const { table_ids } = req.body;
-
+		const { table_ids } = req.query;
+		console.log("table_ids", table_ids, req.query);
 		const tableIdsArray = table_ids.split(",").map((id) => id.trim());
 		for (const tableId of tableIdsArray) {
 			await db.Waiter.destroy({ where: { table_id: tableId } });
@@ -1667,6 +1668,7 @@ const assignWaiterToTables = async (req, res) => {
 		const { user_id, table_ids } = req.body;
 
 		const waiterfound = await db.User.findByPk(user_id);
+		console.log("waiterfound", waiterfound);
 		if (!(waiterfound.role == "waiter")) {
 			return res
 				.status(404)
@@ -1775,7 +1777,7 @@ const editAssignWaiterToTable = async (req, res) => {
 const waitersTableList = async (req, res) => {
 	try {
 		const userId = req.userData.user_id; // Verify the user's token
-		let { page } = req.body;
+		let { page } = req.query;
 
 		const user = await db.User.findOne({
 			where: {
@@ -1790,7 +1792,7 @@ const waitersTableList = async (req, res) => {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
 
-		const waiterId = req.body.waiterId;
+		const waiterId = req.query.waiterId;
 
 		// Verify if the user is a waiter
 		const waiter = await db.User.findOne({

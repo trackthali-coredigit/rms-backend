@@ -768,6 +768,24 @@
                   "item_image": {
                     "type": "string",
                     "format": "binary"
+                  },
+                  "item_name": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number"
+                  },
+                  "stock": {
+                    "type": "integer"
+                  },
+                  "ingredients": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "category_id": {
+                    "type": "integer"
                   }
                 }
               }
@@ -800,6 +818,24 @@
                   "item_image": {
                     "type": "string",
                     "format": "binary"
+                  },
+                  "item_name": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number"
+                  },
+                  "stock": {
+                    "type": "integer"
+                  },
+                  "ingredients": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "category_id": {
+                    "type": "integer"
                   }
                 }
               }

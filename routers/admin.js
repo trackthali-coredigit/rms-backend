@@ -495,6 +495,18 @@ router.get(
  *               item_image:
  *                 type: string
  *                 format: binary
+ *               item_name:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               stock:
+ *                 type: integer
+ *               ingredients:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               category_id:
+ *                 type: integer
  *     responses:
  *       200:
  *         description: Item added
@@ -504,46 +516,54 @@ router.get(
 router.post(
 	"/addItem",
 	upload.fields([{ name: "item_image" }]),
-	// [
-	//   check("item_image").custom((value, { req }) => {
-	//     if (!req.files || !req.files.item_image) {
-	//       throw new Error('Image is required');
-	//     }
-	//     if (req.files.item_image.length>10){
-	//       req.files.item_image.forEach(element => {
-	//         fs.unlinkSync(element.path);
-	//       });
-	//       throw new Error('Maximum 10 images allowed');
-	//     }
-	//     return true;
-	//   }),
-	//   check("item_name")
-	//     .not()
-	//     .isEmpty()
-	//     .withMessage("Item name is required")
-	//     .trim()
-	//     .escape(),
-	//   check('price')
-	//     .notEmpty().withMessage('Price is required')
-	//     .isFloat({ min: 0, max: 1000000 }).withMessage('Price must be a non-negative number less than or equal to 1000000'),
-	//   check('stock')
-	//     .notEmpty().withMessage('Stock is required')
-	//     .isInt({ min: 0, max: 1000000 }).withMessage('Stock must be a non-negative integer less than or equal to 1000000'),
-	//   check("ingredients")
-	//     .not()
-	//     .isEmpty()
-	//     .withMessage("Ingredients are required")
-	//     .trim()
-	//     .escape(),
-	//   check("category_id")
-	//     .not()
-	//     .isEmpty()
-	//     .withMessage("Category ID is required")
-	//     .trim()
-	//     .escape()
-	//     .isNumeric()
-	//     .withMessage("Category ID must be a number")
-	// ],
+	[
+		check("item_image").custom((value, { req }) => {
+			if (!req.files || !req.files.item_image) {
+				throw new Error("Image is required");
+			}
+			if (req.files.item_image.length > 10) {
+				req.files.item_image.forEach((element) => {
+					fs.unlinkSync(element.path);
+				});
+				throw new Error("Maximum 10 images allowed");
+			}
+			return true;
+		}),
+		check("item_name")
+			.not()
+			.isEmpty()
+			.withMessage("Item name is required")
+			.trim()
+			.escape(),
+		check("price")
+			.notEmpty()
+			.withMessage("Price is required")
+			.isFloat({ min: 0, max: 1000000 })
+			.withMessage(
+				"Price must be a non-negative number less than or equal to 1000000"
+			),
+		check("stock")
+			.notEmpty()
+			.withMessage("Stock is required")
+			.isInt({ min: 0, max: 1000000 })
+			.withMessage(
+				"Stock must be a non-negative integer less than or equal to 1000000"
+			),
+		check("ingredients")
+			.not()
+			.isEmpty()
+			.withMessage("Ingredients are required")
+			.trim()
+			.escape(),
+		check("category_id")
+			.not()
+			.isEmpty()
+			.withMessage("Category ID is required")
+			.trim()
+			.escape()
+			.isNumeric()
+			.withMessage("Category ID must be a number"),
+	],
 	validation,
 	authMiddleware,
 	admin.addItem
@@ -565,6 +585,18 @@ router.post(
  *               item_image:
  *                 type: string
  *                 format: binary
+ *               item_name:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               stock:
+ *                 type: integer
+ *               ingredients:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               category_id:
+ *                 type: integer
  *     responses:
  *       200:
  *         description: Item edited
@@ -574,7 +606,50 @@ router.post(
 router.put(
 	"/editItem",
 	upload.fields([{ name: "item_image", maxCount: 10 }]),
-
+	[
+		check("item_id")
+			.not()
+			.isEmpty()
+			.withMessage("Item ID is required")
+			.trim()
+			.escape()
+			.isNumeric()
+			.withMessage("Item ID must be a number"),
+		check("item_name").optional().trim().escape(),
+		check("price")
+			.optional()
+			.isFloat({ min: 0, max: 1000000 })
+			.withMessage(
+				"Price must be a non-negative number less than or equal to 1000000"
+			),
+		check("stock")
+			.optional()
+			.isInt({ min: 0, max: 1000000 })
+			.withMessage(
+				"Stock must be a non-negative integer less than or equal to 1000000"
+			),
+		check("ingredients").optional().trim().escape(),
+		check("category_id")
+			.optional()
+			.trim()
+			.escape()
+			.isNumeric()
+			.withMessage("Category ID must be a number"),
+		check("item_image").custom((value, { req }) => {
+			if (
+				req.files &&
+				req.files.item_image &&
+				req.files.item_image.length > 10
+			) {
+				req.files.item_image.forEach((element) => {
+					fs.unlinkSync(element.path);
+				});
+				throw new Error("Maximum 10 images allowed");
+			}
+			return true;
+		}),
+	],
+	validation,
 	authMiddleware,
 	admin.editItem
 );
