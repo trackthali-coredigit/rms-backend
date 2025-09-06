@@ -1238,13 +1238,15 @@ const addStaff = async (req, res) => {
 		if (user.role === "admin") {
 			// Admin can add waiter, barista, or supervisor
 			role = req.body.role; // Assuming role is passed in the request body
-			if (!["waiter", "barista", "supervisor"].includes(role)) {
+			// Currently allowing admin to add 'user' role as well
+			if (!["waiter", "barista", "supervisor", "user"].includes(role)) {
 				return res.status(400).json({ Status: 0, message: "Invalid role" });
 			}
 		} else {
 			// Supervisor can add only waiter or barista
 			role = req.body.role; // Assuming role is passed in the request body
-			if (!["waiter", "barista"].includes(role)) {
+			// Currently allowing supervisor to add 'user' role as well
+			if (!["waiter", "barista", "user"].includes(role)) {
 				return res.status(400).json({ Status: 0, message: "Invalid role" });
 			}
 		}

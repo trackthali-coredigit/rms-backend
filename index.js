@@ -21,6 +21,7 @@ const admin_router = require("./routers/admin");
 const barista_router = require("./routers/barista");
 const user_router = require("./routers/user");
 const waiter_router = require("./routers/waiter");
+const order_router = require("./routers/order");
 const { socketConfig } = require("./config/socketConfig");
 const { setIO } = require("./config/socketSetup");
 
@@ -42,6 +43,7 @@ app.use("/", admin_router);
 app.use("/", barista_router);
 app.use("/", waiter_router);
 app.use("/", user_router);
+app.use("/", order_router);
 
 app.use("/api-docs", swaggerUi.serve, async (_req, res, next) => {
 	try {
