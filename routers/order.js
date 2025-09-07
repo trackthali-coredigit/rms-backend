@@ -88,6 +88,38 @@ router.put("/updateorder/:order_id", authMiddleware, orders.UpdateOrder);
 
 router.delete("/deleteorder/:order_id", authMiddleware, orders.DeleteOrder);
 
+// Get all the order with appropriate filters and pagination
+router.get(
+	"/orders/all",
+	authMiddleware,
+	[
+		check("page")
+			.not()
+			.isEmpty()
+			.withMessage("page is required")
+			.trim()
+			.escape(),
+		check("order_status")
+			.optional()
+			.isIn(["pending", "in_progress", "complete", "cancelled", "all"])
+			.withMessage(
+				"order_status must be one of pending, in_progress, complete, cancelled, all"
+			),
+		check("order_type")
+			.optional()
+			.isIn(["dine_in", "take_away", "delivery", "all"])
+			.withMessage(
+				"order_type must be one of dine_in, take_away, delivery, all"
+			),
+		check("bill_status")
+			.optional()
+			.isIn(["unpaid", "paid", "refunded", "all"])
+			.withMessage("bill_status must be one of unpaid, paid, refunded, all"),
+	],
+	validation,
+	orders.GetAllOrders
+);
+
 // Order Items routes
 router.post(
 	"/makeorderitem",
@@ -151,5 +183,24 @@ router.put(
 	validation,
 	orders.UpdateOrderItem
 );
+
+// Access all order_items for barista
+router.get("/barista/orderitems", authMiddleware, orders.GetBaristaOrderItems);
+
+// waiter order completed route
+router.put(
+	"/waiter/order/:order_id/complete",
+	authMiddleware,
+	[
+		check("order_status")
+			.isIn(["complete"])
+			.withMessage("order_status must be complete"),
+	],
+	validation,
+	orders.WaiterOrderComplete
+);
+
+// Get all order based on waiter
+router.get("/waiter/orders/all", authMiddleware, orders.GetWaiterOrders);
 
 module.exports = router;

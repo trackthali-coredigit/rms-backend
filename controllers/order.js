@@ -1,6 +1,6 @@
 require("sequelize");
 require("dotenv").config();
-const { Op } = require("sequelize");
+const { Op, or, where } = require("sequelize");
 
 //Todo: Change Admin and Supervisor to add user also
 
@@ -145,6 +145,101 @@ const DeleteOrder = async (req, res) => {
 			.json({ Status: 1, message: "Order Deleted Successfully" });
 	} catch (error) {
 		console.error("Error deleting order:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
+};
+
+const GetAllOrders = async (req, res) => {
+	try {
+		console.log("im in get all orders controller");
+		const current_user_id = req.userData.user_id;
+		const business_id = req.userData.business_id;
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id: current_user_id },
+					{ [Op.or]: [{ role: "admin" }] },
+				],
+			},
+		});
+		if (!user) {
+			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
+		const { page, order_status, order_type, bill_status } = req.body;
+		const pageSize = 20;
+		let currentPage = parseInt(page, 10) || 1;
+		if (currentPage < 1) currentPage = 1;
+
+		const offset = (currentPage - 1) * pageSize;
+
+		// Build filter
+		const where = { business_id };
+
+		if (order_status && order_status !== "all") {
+			where.order_status = order_status;
+		}
+		if (order_type && order_type !== "all") {
+			where.order_type = order_type;
+		}
+		if (bill_status && bill_status !== "all") {
+			where.bill_status = bill_status;
+		}
+
+		const { count, rows } = await db.Order.findAndCountAll({
+			where,
+			include: [
+				{
+					model: db.Order_Item,
+					required: false,
+					include: [
+						{
+							model: db.User,
+							attributes: ["user_id", "first_name", "last_name", "role"],
+							required: false,
+						},
+					],
+				},
+				{
+					model: db.User,
+					attributes: ["user_id", "role", "first_name", "last_name"],
+					required: false,
+				},
+				{
+					model: db.Waiter,
+					attributes: ["id", "user_id"],
+					required: false,
+					include: [
+						{
+							model: db.User,
+							as: "users_model",
+							attributes: ["user_id", "first_name", "last_name", "role"],
+							required: false,
+						},
+					],
+				},
+				// {
+				// 	model: db.Business,
+				// 	attributes: ["business_id", "business_name"],
+				// 	required: false,
+				// },
+			],
+			distinct: true,
+			limit: pageSize,
+			offset,
+			order: [["updatedAt", "DESC"]],
+		});
+		const totalPages = Math.ceil(count / pageSize);
+
+		return res.status(200).json({
+			Status: 1,
+			message: "Order list fetched successfully",
+			current_page: currentPage,
+			total_pages: totalPages,
+			orders: rows,
+			total: count,
+		});
+	} catch (error) {
+		console.error("Error getting all orders:", error);
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });
 	}
 };
@@ -346,12 +441,180 @@ const BaristaOrderAccept = async (req, res) => {
 	}
 };
 
+const GetBaristaOrderItems = async (req, res) => {
+	try {
+		console.log("im in get barista order items controller");
+		const current_user_id = req.userData.user_id;
+		const business_id = req.userData.business_id;
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id: current_user_id },
+					{ [Op.or]: [{ role: "barista" }, { role: "admin" }] },
+				],
+			},
+		});
+		if (!user) {
+			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
+		const { page } = req.body;
+		const pageSize = 20;
+		let currentPage = parseInt(page, 10) || 1;
+		if (currentPage < 1) currentPage = 1;
+		const offset = (currentPage - 1) * pageSize;
+
+		const where = {
+			business_id,
+			order_item_status: { [Op.notIn]: ["served", "cancelled"] },
+		};
+		const { count, rows } = await db.Order_Item.findAndCountAll({
+			where,
+			include: [
+				{
+					model: db.User,
+					attributes: ["user_id", "first_name", "last_name", "role"],
+					required: false,
+				},
+			],
+			distinct: true,
+			limit: pageSize,
+			offset,
+			order: [["updatedAt", "DESC"]],
+		});
+		const totalPages = Math.ceil(count / pageSize);
+		return res.status(200).json({
+			Status: 1,
+			message: "Barista Order items fetched successfully",
+			current_page: currentPage,
+			total_pages: totalPages,
+			order_items: rows,
+			total: count,
+		});
+	} catch (error) {
+		console.error("Error getting barista order items:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
+};
+
+// Waiter marks order complete and appropriate order items as served
+const WaiterOrderComplete = async (req, res) => {
+	try {
+		console.log("im in waiter complete order controller");
+		const current_user_id = req.userData.user_id;
+		const business_id = req.userData.business_id;
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id: current_user_id },
+					{ [Op.or]: [{ role: "waiter" }, { role: "admin" }] },
+				],
+			},
+		});
+		if (!user) {
+			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
+		// Proceed with marking the order as complete
+		const { order_id } = req.params;
+		const { order_status } = req.body;
+		const order = await db.Order.findOne({ where: { order_id, business_id } });
+		if (!order) {
+			return res.status(404).json({ Status: 0, message: "Order Not Found" });
+		}
+		if (order_status !== "complete") {
+			return res
+				.status(400)
+				.json({ Status: 0, message: "Invalid order status update" });
+		}
+		order.order_status = "complete";
+		// Update all associated order items to 'served' if they are not cancelled
+		await db.Order_Item.update(
+			{ order_item_status: "served" },
+			{ where: { order_id, order_item_status: { [Op.ne]: "cancelled" } } }
+		);
+		await order.save();
+		return res
+			.status(200)
+			.json({ Status: 1, message: "Order Marked as Complete Successfully" });
+	} catch (error) {
+		console.error("Error completing order:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
+};
+
+// Get all orders for the current loggedin waiter
+const GetWaiterOrders = async (req, res) => {
+	try {
+		console.log("im in get waiter orders controller");
+		const current_user_id = req.userData.user_id;
+		const business_id = req.userData.business_id;
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id: current_user_id },
+					{ [Op.or]: [{ role: "waiter" }, { role: "admin" }] },
+				],
+			},
+		});
+
+		if (!user) {
+			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
+
+		const { page } = req.body;
+		const pageSize = 20;
+		let currentPage = parseInt(page, 10) || 1;
+		if (currentPage < 1) currentPage = 1;
+		const offset = (currentPage - 1) * pageSize;
+
+		const where = { business_id };
+
+		const { count, rows } = await db.Order.findAndCountAll({
+			where,
+			include: [
+				{
+					model: db.Waiter,
+					as: "waiter_model",
+					attributes: ["id", "user_id"],
+					required: true,
+					where: { user_id: current_user_id },
+				},
+				{
+					model: db.Order_Item,
+					required: false,
+				},
+			],
+			limit: pageSize,
+			offset,
+			order: [["updatedAt", "DESC"]],
+		});
+
+		const totalPages = Math.ceil(count / pageSize);
+
+		return res.status(200).json({
+			Status: 1,
+			message: "Waiter Orders fetched successfully",
+			current_page: currentPage,
+			total_pages: totalPages,
+			orders: rows,
+			total: rows.length,
+			current_user_id,
+		});
+	} catch (error) {
+		console.error("Error getting waiter orders:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
+};
+
 module.exports = {
 	MakeOrder,
 	UpdateOrder,
 	DeleteOrder,
+	GetAllOrders,
 	MakeOrderItem,
 	UpdateOrderItem,
 	DeleteOrderItem,
 	BaristaOrderAccept,
+	GetBaristaOrderItems,
+	WaiterOrderComplete,
+	GetWaiterOrders,
 };
