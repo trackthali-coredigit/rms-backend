@@ -23,6 +23,9 @@ module.exports = (sequelize, DataTypes) => {
 				},
 			},
 			order_status: {
+				// Barista order accept status in_progress
+				// When customer finally order completed then completed - admin change the status to completed
+				// If customer cancel the order then cancelled - admin and waiter change the status to cancelled
 				type: DataTypes.ENUM("to_do", "in_progress", "complete", "cancelled"),
 				isIn: {
 					args: [["to_do", "in_progress", "complete", "cancelled"]],

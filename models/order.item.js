@@ -62,6 +62,14 @@ module.exports = (sequelize, DataTypes) => {
 			item_name: {
 				type: DataTypes.STRING,
 			},
+			barista_id: {
+				type: DataTypes.INTEGER,
+				references: {
+					model: "tbl_users",
+					key: "user_id",
+				},
+				defaultValue: null,
+			},
 		},
 		{
 			tableName: "tbl_order_items",

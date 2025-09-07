@@ -86,6 +86,8 @@ router.post(
  */
 router.put("/updateorder/:order_id", authMiddleware, orders.UpdateOrder);
 
+router.delete("/deleteorder/:order_id", authMiddleware, orders.DeleteOrder);
+
 // Order Items routes
 router.post(
 	"/makeorderitem",
@@ -115,5 +117,39 @@ router.put(
 	orders.UpdateOrderItem
 );
 
-// router.put("/barista/order/accept", authMiddleware, orders.BaristaOrderAccept);
+router.delete(
+	"/deleteorderitem/:order_item_id",
+	authMiddleware,
+	orders.DeleteOrderItem
+);
+
+// Barista routes
+router.put(
+	"/barista/order/accept",
+	authMiddleware,
+	[
+		check("order_id").isInt().withMessage("order_id must be an integer"),
+		check("orderItem_id")
+			.isInt()
+			.withMessage("orderItem_id must be an integer"),
+		check("barista_id").isInt().withMessage("barista_id must be an integer"),
+	],
+	validation,
+	orders.BaristaOrderAccept
+);
+
+router.put(
+	"/orderitem/status/:order_item_id",
+	authMiddleware,
+	[
+		check("order_item_status")
+			.isIn(["to_do", "in_making", "ready_to_serve", "served", "cancelled"])
+			.withMessage(
+				"order_item_status must be one of to_do, in_making, ready_to_serve, served, cancelled"
+			),
+	],
+	validation,
+	orders.UpdateOrderItem
+);
+
 module.exports = router;
