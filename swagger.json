@@ -779,10 +779,9 @@
                     "type": "integer"
                   },
                   "ingredients": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
+                    "type": "string",
+                    "description": "JSON stringified array of ingredient objects.",
+                    "example": "[{\"name\":\"mayo\",\"price\":21,\"quantity\":1}]"
                   },
                   "category_id": {
                     "type": "integer"
@@ -815,6 +814,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "item_id": {
+                    "type": "integer",
+                    "required": true
+                  },
                   "item_image": {
                     "type": "string",
                     "format": "binary"
@@ -829,10 +832,9 @@
                     "type": "integer"
                   },
                   "ingredients": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
+                    "type": "string",
+                    "description": "JSON stringified array of ingredient objects.",
+                    "example": "[{\"name\":\"mayo\",\"price\":21,\"quantity\":1}]"
                   },
                   "category_id": {
                     "type": "integer"

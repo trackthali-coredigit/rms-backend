@@ -502,9 +502,9 @@ router.get(
  *               stock:
  *                 type: integer
  *               ingredients:
- *                 type: array
- *                 items:
- *                   type: string
+ *                 type: string
+ *                 description: JSON stringified array of ingredient objects.
+ *                 example: '[{"name":"mayo","price":21,"quantity":1}]'
  *               category_id:
  *                 type: integer
  *     responses:
@@ -549,12 +549,7 @@ router.post(
 			.withMessage(
 				"Stock must be a non-negative integer less than or equal to 1000000"
 			),
-		check("ingredients")
-			.not()
-			.isEmpty()
-			.withMessage("Ingredients are required")
-			.trim()
-			.escape(),
+		check("ingredients").optional().trim().escape(),
 		check("category_id")
 			.not()
 			.isEmpty()
@@ -582,6 +577,9 @@ router.post(
  *           schema:
  *             type: object
  *             properties:
+ *               item_id:
+ *                 type: integer
+ *                 required: true
  *               item_image:
  *                 type: string
  *                 format: binary
@@ -592,9 +590,9 @@ router.post(
  *               stock:
  *                 type: integer
  *               ingredients:
- *                 type: array
- *                 items:
- *                   type: string
+ *                 type: string
+ *                 description: JSON stringified array of ingredient objects.
+ *                 example: '[{"name":"mayo","price":21,"quantity":1}]'
  *               category_id:
  *                 type: integer
  *     responses:

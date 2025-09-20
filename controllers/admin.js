@@ -672,8 +672,26 @@ const addItem = async (req, res) => {
 		if (!user) {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
-		const { item_name, price, stock, ingredients, category_id } = req.body;
+		let { item_name, price, stock, ingredients, category_id } = req.body;
 		const images = req.files.item_image;
+		// Parse ingredients if it is a string (e.g., from form-data)
+		if (ingredients && typeof ingredients === "string") {
+			try {
+				// Replace HTML entities for quotes if present
+				const normalized = ingredients
+					.replace(/&quot;/g, '"')
+					.replace(/&#39;/g, "'")
+					.replace(/'/g, '"');
+				const parsed = JSON.parse(normalized);
+				ingredients = Array.isArray(parsed) ? parsed : [parsed];
+				console.log("Parsed ingredients:", ingredients);
+			} catch (e) {
+				console.error("Error parsing ingredients:", e);
+				return res
+					.status(400)
+					.json({ Status: 0, message: "Invalid ingredients format" });
+			}
+		}
 
 		// Create the item
 		const item = await db.Items.create({
@@ -728,14 +746,16 @@ const addItem = async (req, res) => {
 		// Wait for all images to be processed
 		await Promise.all(imageProcessingPromises);
 
-		const ingredientArray = ingredients.split(",").map((id) => id.trim());
-
-		await db.Ingrediant.bulkCreate(
-			ingredientArray.map((name) => ({
-				item_id: item.item_id,
-				name,
-			}))
-		);
+		if (Array.isArray(ingredients) && ingredients.length > 0) {
+			await db.Ingrediant.bulkCreate(
+				ingredients.map((ingredient) => ({
+					item_id: item.item_id,
+					name: ingredient.name,
+					price: ingredient.price,
+					quantity: ingredient.quantity,
+				}))
+			);
+		}
 
 		const users = await db.User.findAll({
 			attributes: ["user_id"],
@@ -789,7 +809,23 @@ const editItem = async (req, res) => {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
 
-		const { item_id, item_name, price, stock, ingredients } = req.body;
+		let { item_id, item_name, price, stock, ingredients } = req.body;
+		if (ingredients && typeof ingredients === "string") {
+			try {
+				// Replace HTML entities for quotes if present
+				const normalized = ingredients
+					.replace(/&quot;/g, '"')
+					.replace(/&#39;/g, "'")
+					.replace(/'/g, '"');
+				const parsed = JSON.parse(normalized);
+				ingredients = Array.isArray(parsed) ? parsed : [parsed];
+			} catch (e) {
+				console.error("Error parsing ingredients:", e);
+				return res
+					.status(400)
+					.json({ Status: 0, message: "Invalid ingredients format" });
+			}
+		}
 
 		const item = await db.Items.findByPk(item_id);
 		if (!item) {
@@ -849,15 +885,19 @@ const editItem = async (req, res) => {
 			// Wait for all images to be processed
 			await Promise.all(imageProcessingPromises);
 		}
-		if (!!ingredients) {
-			const ingredientArray = ingredients.split(",").map((id) => id.trim());
+		if (Array.isArray(ingredients) && ingredients.length > 0) {
+			// Remove existing ingredients for the item
+			await db.Ingrediant.destroy({ where: { item_id: item.item_id } });
 
-			for (let i = 0; i < ingredientArray.length; i++) {
-				await db.Ingrediant.create({
+			// Add new ingredients
+			await db.Ingrediant.bulkCreate(
+				ingredients.map((ingredient) => ({
 					item_id: item.item_id,
-					name: ingredientArray[i],
-				});
-			}
+					name: ingredient.name,
+					price: ingredient.price,
+					quantity: ingredient.quantity,
+				}))
+			);
 		}
 		res.status(200).json({
 			Status: 1,
