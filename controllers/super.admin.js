@@ -58,14 +58,12 @@ const SuperAdminSignIn = async (req, res) => {
 			process.env.JWT_SECRET_KEY
 		);
 
-		return res
-			.status(200)
-			.json({
-				Status: 1,
-				message: "Sign-in successful",
-				token,
-				user_id: user.user_id,
-			});
+		return res.status(200).json({
+			Status: 1,
+			message: "Sign-in successful",
+			token,
+			user_id: user.user_id,
+		});
 	} catch (error) {
 		console.error("Error during super admin sign-in:", error);
 		return res
@@ -92,6 +90,7 @@ const createAdmin = async (req, res) => {
 			business_phone_no,
 			business_country_code,
 			business_iso_code,
+			tax,
 		} = req.body;
 
 		const existingAdminWithEmail = await db.User.findOne({
@@ -131,6 +130,7 @@ const createAdmin = async (req, res) => {
 			country_code: business_country_code,
 			iso_code: business_iso_code,
 			business_image,
+			tax,
 		});
 		await db.User.create({
 			business_id: existBusiness.business_id,
@@ -171,6 +171,7 @@ const editAdmin = async (req, res) => {
 			phone_no,
 			email,
 			password,
+			tax,
 		} = req.body;
 
 		const existingAdmin = await db.User.findOne({
@@ -226,6 +227,7 @@ const editAdmin = async (req, res) => {
 			business_phone_no,
 			country_code: business_country_code,
 			iso_code: business_iso_code,
+			tax,
 		};
 
 		if (req.files && req.files.business_image) {
@@ -255,12 +257,10 @@ const editAdmin = async (req, res) => {
 const getBusinessAdminList = async (req, res) => {
 	try {
 		if (req.userData.role !== "super_admin")
-			return res
-				.status(401)
-				.json({
-					status: 0,
-					message: "User is not authorized to access admin list",
-				});
+			return res.status(401).json({
+				status: 0,
+				message: "User is not authorized to access admin list",
+			});
 
 		const page = parseInt(req.query.page);
 		const limit = 10;
@@ -303,14 +303,12 @@ const getBusinessAdminList = async (req, res) => {
 			return res.status(404).json({ status: 0, message: "No admin found" });
 
 		const totalPages = Math.ceil(count / limit);
-		res
-			.status(200)
-			.json({
-				status: 1,
-				message: "Admins fetched successfully",
-				totalPages,
-				adminList,
-			});
+		res.status(200).json({
+			status: 1,
+			message: "Admins fetched successfully",
+			totalPages,
+			adminList,
+		});
 		// res.status(200).json({ status: 1, message: "Admins fetched successfully", adminList });
 	} catch (error) {
 		console.error("Error fetching admin list:", error);
@@ -415,12 +413,10 @@ const getStaffList = async (req, res) => {
 const getBusinessList = async (req, res) => {
 	try {
 		if (req.userData.role !== "super_admin")
-			return res
-				.status(401)
-				.json({
-					status: 0,
-					message: "User is not authorized to access admin list",
-				});
+			return res.status(401).json({
+				status: 0,
+				message: "User is not authorized to access admin list",
+			});
 
 		// const page = parseInt(req.query.page);
 		// const limit = 10;
@@ -438,13 +434,11 @@ const getBusinessList = async (req, res) => {
 
 		// const totalPages = Math.ceil(count / limit);
 		// res.status(200).json({ status: 1, message: "bussiness fetched successfully", totalPages, bussinessList });
-		res
-			.status(200)
-			.json({
-				status: 1,
-				message: "bussiness fetched successfully",
-				bussinessList,
-			});
+		res.status(200).json({
+			status: 1,
+			message: "bussiness fetched successfully",
+			bussinessList,
+		});
 	} catch (error) {
 		console.error("Error fetching admin list:", error);
 		res.status(500).json({ status: 0, message: "Internal Server Error" });
@@ -475,24 +469,20 @@ const getBusinessTableList = async (req, res) => {
 		});
 
 		if (count === 0)
-			return res
-				.status(200)
-				.json({
-					Status: 0,
-					message: "No table found",
-					tables,
-					bussiness_data: isBussiness,
-				});
-		const totalPages = Math.ceil(count / limit);
-		res
-			.status(200)
-			.json({
-				Status: 1,
-				message: "Get Table List Succesfully",
-				totalPages,
+			return res.status(200).json({
+				Status: 0,
+				message: "No table found",
 				tables,
 				bussiness_data: isBussiness,
 			});
+		const totalPages = Math.ceil(count / limit);
+		res.status(200).json({
+			Status: 1,
+			message: "Get Table List Succesfully",
+			totalPages,
+			tables,
+			bussiness_data: isBussiness,
+		});
 	} catch (error) {
 		console.error("Error fetching table list:", error);
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });
@@ -522,14 +512,12 @@ const getBusinessCategoryList = async (req, res) => {
 			offset: offset,
 		});
 		const totalPages = Math.ceil(count / limit);
-		res
-			.status(200)
-			.json({
-				Status: 1,
-				message: "The Category get Succesfully",
-				totalPages,
-				categories,
-			});
+		res.status(200).json({
+			Status: 1,
+			message: "The Category get Succesfully",
+			totalPages,
+			categories,
+		});
 	} catch (error) {
 		console.error("Error fetching category list:", error);
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });
@@ -582,14 +570,12 @@ const getBusinessItemList = async (req, res) => {
 				.json({ Status: 0, message: "No ItemList found", data: rows });
 
 		const totalPages = Math.ceil(count / limit);
-		res
-			.status(200)
-			.json({
-				Status: 1,
-				message: "The ItemList get succesfully",
-				totalPages,
-				data: rows,
-			});
+		res.status(200).json({
+			Status: 1,
+			message: "The ItemList get succesfully",
+			totalPages,
+			data: rows,
+		});
 	} catch (error) {
 		console.error("Error fetching item list:", error);
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });

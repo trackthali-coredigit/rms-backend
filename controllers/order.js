@@ -218,11 +218,11 @@ const GetAllOrders = async (req, res) => {
 						},
 					],
 				},
-				// {
-				// 	model: db.Business,
-				// 	attributes: ["business_id", "business_name"],
-				// 	required: false,
-				// },
+				{
+					model: db.Business,
+					attributes: ["business_id", "business_name", "tax"],
+					required: false,
+				},
 			],
 			distinct: true,
 			limit: pageSize,

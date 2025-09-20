@@ -125,6 +125,10 @@ router.post(
  *                 type: string
  *               business_country_code:
  *                 type: string
+ *               tax:
+ *                 type: number
+ *                 format: float
+ *               description: Tax percentage (0-100)
  *     responses:
  *       200:
  *         description: Admin created
@@ -246,6 +250,14 @@ router.post(
 			)
 			.trim()
 			.escape(),
+		check("tax")
+			.not()
+			.isEmpty()
+			.withMessage("Tax is required")
+			.isFloat({ min: 0, max: 100 })
+			.withMessage("Tax must be a positive number between 0 and 100")
+			.trim()
+			.escape(),
 	],
 	validation,
 	authMiddleware,
@@ -295,6 +307,10 @@ router.post(
  *                 type: string
  *               admin_id:
  *                 type: integer
+ *               tax:
+ *                 type: number
+ *                 format: float
+ *               description: Tax percentage (0-100)
  *     responses:
  *       200:
  *         description: Admin edited
@@ -385,6 +401,18 @@ router.put(
 			.withMessage("admin_id is required")
 			.isInt({ min: 1 })
 			.withMessage("admin_id must be a positive integer")
+			.trim()
+			.escape(),
+		check("tax")
+			.optional()
+			.isFloat({ min: 0, max: 100 })
+			.withMessage("Tax must be a positive number between 0 and 100")
+			.trim()
+			.escape(),
+		check("admin_id")
+			.optional()
+			.isInt()
+			.withMessage("admin_id must be an integer")
 			.trim()
 			.escape(),
 	],
