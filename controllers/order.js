@@ -190,6 +190,7 @@ const GetAllOrders = async (req, res) => {
 			include: [
 				{
 					model: db.Order_Item,
+					as: "order_items_models",
 					required: false,
 					include: [
 						{
@@ -228,6 +229,30 @@ const GetAllOrders = async (req, res) => {
 			offset,
 			order: [["updatedAt", "DESC"]],
 		});
+
+		// Fetch ingrediant data for each order item (if ingrediant_id is comma separated)
+		for (const order of rows) {
+			if (order.order_items_models && Array.isArray(order.order_items_models)) {
+				for (const item of order.order_items_models) {
+					if (item.ingrediant_id) {
+						const ingrediantIds = item.ingrediant_id
+							.split(",")
+							.map((id) => id.trim())
+							.filter((id) => id);
+						if (ingrediantIds.length > 0) {
+							item.dataValues.ingrediant_models = await db.Ingrediant.findAll({
+								where: { ingrediant_id: ingrediantIds },
+								attributes: ["ingrediant_id", "name", "price"],
+							});
+						} else {
+							item.dataValues.ingrediant_models = [];
+						}
+					} else {
+						item.dataValues.ingrediant_models = [];
+					}
+				}
+			}
+		}
 		const totalPages = Math.ceil(count / pageSize);
 
 		return res.status(200).json({
@@ -269,6 +294,7 @@ const MakeOrderItem = async (req, res) => {
 			quantity,
 			price,
 			item_name,
+			ingrediant_id,
 		} = req.body;
 
 		console.log(
@@ -293,6 +319,7 @@ const MakeOrderItem = async (req, res) => {
 			quantity,
 			price,
 			item_name,
+			ingrediant_id,
 		});
 		console.log("New Order Item Created:", newOrderItem);
 

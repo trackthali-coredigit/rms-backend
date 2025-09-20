@@ -8,6 +8,10 @@ module.exports = (sequelize, DataTypes) => {
 				autoIncrement: true, // Sequelize will automatically set this as auto-increment since it's the primary key
 				allowNull: false,
 			},
+			ingrediant_id: {
+				type: DataTypes.STRING,
+				defaultValue: null,
+			},
 			business_id: {
 				type: DataTypes.INTEGER,
 				references: {

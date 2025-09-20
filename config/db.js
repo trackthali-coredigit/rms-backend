@@ -95,6 +95,18 @@ db.Ingrediant.belongsTo(db.Items, {
 	targetKey: "item_id",
 });
 
+// Add association for Ingrediant to Order_Item
+db.Ingrediant.hasMany(db.Order_Item, {
+	foreignKey: "ingrediant_id",
+	sourceKey: "ingrediant_id",
+	targetKey: "ingrediant_id",
+});
+db.Order_Item.hasMany(db.Ingrediant, {
+	foreignKey: "ingrediant_id",
+	sourceKey: "ingrediant_id",
+	targetKey: "ingrediant_id",
+});
+
 db.Business.hasMany(db.Tables, {
 	foreignKey: "business_id",
 	sourceKey: "business_id",
