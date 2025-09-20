@@ -2631,6 +2631,7 @@ module.exports = {
 	getCategoryList,
 	getItemList,
 	getItemDetails,
+	
 	addStaff,
 	getStaffList,
 	editStaffProfile,
