@@ -459,6 +459,99 @@ const GetAllCurrentWaiterOrders = async (req, res) => {
 	}
 };
 
+const GetOrderDetails = async (req, res) => {
+	try {
+		console.log("im in get order details controller");
+		const current_user_id = req.userData.user_id;
+		const business_id = req.userData.business_id;
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id: current_user_id },
+					// { [Op.or]: [{ role: "waiter" }, { role: "admin" }, { role: "barista" }] },
+				],
+			},
+		});
+		if (!user) {
+			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
+		const { order_id } = req.params;
+		const order = await db.Order.findOne({
+			where: { order_id, business_id },
+			include: [
+				{
+					model: db.Order_Item,
+					as: "order_items_models",
+					required: false,
+					include: [
+						{
+							model: db.User,
+							attributes: ["user_id", "first_name", "last_name", "role"],
+							required: false,
+						},
+					],
+				},
+				{
+					model: db.User,
+					attributes: ["user_id", "role", "first_name", "last_name"],
+					required: false,
+				},
+				{
+					model: db.Waiter,
+					attributes: ["id", "user_id"],
+					required: false,
+					include: [
+						{
+							model: db.User,
+							as: "users_model",
+							attributes: ["user_id", "first_name", "last_name", "role"],
+							required: false,
+						},
+					],
+				},
+				{
+					model: db.Business,
+					attributes: ["business_id", "business_name", "tax"],
+					required: false,
+				},
+			],
+		});
+		if (!order) {
+			return res.status(404).json({ Status: 0, message: "Order Not Found" });
+		}
+		// Fetch ingrediant data for each order item (if ingrediant_id is comma separated)
+		if (order.order_items_models && Array.isArray(order.order_items_models)) {
+			for (const item of order.order_items_models) {
+				if (item.ingrediant_id) {
+					const ingrediantIds = item.ingrediant_id
+						.split(",")
+						.map((id) => id.trim())
+						.filter((id) => id);
+					if (ingrediantIds.length > 0) {
+						item.dataValues.ingrediant_models = await db.Ingrediant.findAll({
+							where: { ingrediant_id: ingrediantIds },
+							attributes: ["ingrediant_id", "name", "price"],
+						});
+					} else {
+						item.dataValues.ingrediant_models = [];
+					}
+				} else {
+					item.dataValues.ingrediant_models = [];
+				}
+			}
+		}
+
+		return res.status(200).json({
+			Status: 1,
+			message: "Order details fetched successfully",
+			data: order,
+		});
+	} catch (error) {
+		console.error("Error getting order details:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
+};
+
 const GetAllCurrentBaristaOrders = async (req, res) => {
 	try {
 		console.log("im in get all current barista orders controller");
@@ -960,6 +1053,7 @@ module.exports = {
 	GetAllOrders,
 	GetAllCurrentWaiterOrders,
 	GetAllCurrentBaristaOrders,
+	GetOrderDetails,
 	MakeOrderItem,
 	UpdateOrderItem,
 	DeleteOrderItem,

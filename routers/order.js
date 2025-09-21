@@ -222,6 +222,9 @@ router.get(
 	orders.GetAllCurrentBaristaOrders
 );
 
+// Get single order details
+router.get("/order/:order_id", authMiddleware, orders.GetOrderDetails);
+
 // Order Items routes
 router.post(
 	"/makeorderitem",
