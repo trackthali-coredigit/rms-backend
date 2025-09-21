@@ -1,6 +1,7 @@
 require("sequelize");
 require("dotenv").config();
 const { Op, or, where } = require("sequelize");
+const { emitToSockets } = require("../config/socketConfig");
 
 //Todo: Change Admin and Supervisor to add user also
 
@@ -75,6 +76,16 @@ const MakeOrder = async (req, res) => {
 			);
 		}
 
+		// Emit socket event for new order
+		try {
+			await emitToSockets(user_id, "order_created", { order: newOrder });
+			if (waiter_id)
+				await emitToSockets(waiter_id, "order_created", { order: newOrder });
+			if (barista_id)
+				await emitToSockets(barista_id, "order_created", { order: newOrder });
+		} catch (e) {
+			console.error("Socket emit error (MakeOrder):", e);
+		}
 		return res.status(201).json({
 			Status: 1,
 			message: "Order Created Successfully",
@@ -127,6 +138,14 @@ const UpdateOrder = async (req, res) => {
 			where: { order_id: req.params.order_id },
 		});
 
+		// Emit socket event for order update
+		try {
+			await emitToSockets(current_user_id, "order_updated", {
+				order: updatedOrder,
+			});
+		} catch (e) {
+			console.error("Socket emit error (UpdateOrder):", e);
+		}
 		return res.status(200).json({
 			Status: 1,
 			message: "Order Updated Successfully",
@@ -189,6 +208,12 @@ const DeleteOrder = async (req, res) => {
 		await db.Order_Item.destroy({
 			where: { order_id, business_id },
 		});
+		// Emit socket event for order deletion
+		try {
+			await emitToSockets(current_user_id, "order_deleted", { order_id });
+		} catch (e) {
+			console.error("Socket emit error (DeleteOrder):", e);
+		}
 		return res
 			.status(200)
 			.json({ Status: 1, message: "Order Deleted Successfully" });
@@ -736,6 +761,14 @@ const MakeOrderItem = async (req, res) => {
 		});
 		console.log("New Order Item Created:", newOrderItem);
 
+		// Emit socket event for new order item
+		try {
+			await emitToSockets(current_user_id, "order_item_created", {
+				order_item: newOrderItem,
+			});
+		} catch (e) {
+			console.error("Socket emit error (MakeOrderItem):", e);
+		}
 		return res.status(201).json({
 			Status: 1,
 			message: "Order Item Created Successfully",
@@ -782,6 +815,14 @@ const UpdateOrderItem = async (req, res) => {
 		const updatedOrderItem = await db.Order_Item.findOne({
 			where: { orderItem_id: req.params.order_item_id },
 		});
+		// Emit socket event for order item update
+		try {
+			await emitToSockets(current_user_id, "order_item_updated", {
+				order_item: updatedOrderItem,
+			});
+		} catch (e) {
+			console.error("Socket emit error (UpdateOrderItem):", e);
+		}
 		return res.status(200).json({
 			Status: 1,
 			message: "Order Item Updated Successfully",
@@ -820,6 +861,14 @@ const DeleteOrderItem = async (req, res) => {
 				.json({ Status: 0, message: "Order Item Not Found" });
 		}
 		await orderItem.destroy();
+		// Emit socket event for order item deletion
+		try {
+			await emitToSockets(current_user_id, "order_item_deleted", {
+				order_item_id,
+			});
+		} catch (e) {
+			console.error("Socket emit error (DeleteOrderItem):", e);
+		}
 		return res
 			.status(200)
 			.json({ Status: 1, message: "Order Item Deleted Successfully" });
@@ -871,6 +920,14 @@ const BaristaOrderAccept = async (req, res) => {
 
 			await orderItem.save();
 			await order.save();
+		}
+		// Emit socket event for barista order accept
+		try {
+			await emitToSockets(current_user_id, "barista_order_accepted", {
+				order_id,
+			});
+		} catch (e) {
+			console.error("Socket emit error (BaristaOrderAccept):", e);
 		}
 		return res
 			.status(200)
@@ -972,6 +1029,14 @@ const WaiterOrderComplete = async (req, res) => {
 			{ where: { order_id, order_item_status: { [Op.ne]: "cancelled" } } }
 		);
 		await order.save();
+		// Emit socket event for waiter order complete
+		try {
+			await emitToSockets(current_user_id, "waiter_order_completed", {
+				order_id,
+			});
+		} catch (e) {
+			console.error("Socket emit error (WaiterOrderComplete):", e);
+		}
 		return res
 			.status(200)
 			.json({ Status: 1, message: "Order Marked as Complete Successfully" });
