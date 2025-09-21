@@ -18,10 +18,24 @@ router.post(
 	"/makeorder",
 	authMiddleware,
 	[
-		check("table_id").isInt().withMessage("table_id must be an integer"),
 		check("order_type")
 			.isIn(["dine_in", "take_away", "delivery"])
 			.withMessage("order_type must be one of dine_in, take_away, delivery"),
+		check("table_id").custom((value, { req }) => {
+			if (req.body.order_type === "dine_in") {
+				if (value === undefined || value === null || value === "") {
+					throw new Error("table_id is required for dine_in orders");
+				}
+				if (!Number.isInteger(Number(value))) {
+					throw new Error("table_id must be an integer");
+				}
+			} else if (value !== undefined && value !== null && value !== "") {
+				if (!Number.isInteger(Number(value))) {
+					throw new Error("table_id must be an integer");
+				}
+			}
+			return true;
+		}),
 		check("user_id").isInt().withMessage("user_id must be an integer"),
 		check("barista_id")
 			.optional({ nullable: true })
@@ -90,7 +104,7 @@ router.delete("/deleteorder/:order_id", authMiddleware, orders.DeleteOrder);
 
 // Get all the order with appropriate filters and pagination
 router.get(
-	"/orders/all",
+	"/admin/orders/all",
 	authMiddleware,
 	[
 		check("page")
@@ -115,9 +129,97 @@ router.get(
 			.optional()
 			.isIn(["unpaid", "paid", "refunded", "all"])
 			.withMessage("bill_status must be one of unpaid, paid, refunded, all"),
+		check("sort_by")
+			.optional()
+			.isString()
+			.withMessage("sort_by must be a string"),
+		check("sort_order")
+			.optional()
+			.isIn(["ASC", "DESC", "asc", "desc"])
+			.withMessage("sort_order must be ASC or DESC"),
 	],
 	validation,
 	orders.GetAllOrders
+);
+
+// Get all the orders for current logged in waiter
+router.get(
+	"/waiter/orders/all",
+	authMiddleware,
+	[
+		check("page")
+			.not()
+			.isEmpty()
+			.withMessage("page is required")
+			.trim()
+			.escape(),
+		check("order_status")
+			.optional()
+			.isIn(["pending", "in_progress", "completed", "cancelled", "all"])
+			.withMessage(
+				"order_status must be one of pending, in_progress, completed, cancelled, all"
+			),
+		check("order_type")
+			.optional()
+			.isIn(["dine_in", "take_away", "delivery", "all"])
+			.withMessage(
+				"order_type must be one of dine_in, take_away, delivery, all"
+			),
+		check("bill_status")
+			.optional()
+			.isIn(["unpaid", "paid", "refunded", "all"])
+			.withMessage("bill_status must be one of unpaid, paid, refunded, all"),
+		check("sort_by")
+			.optional()
+			.isString()
+			.withMessage("sort_by must be a string"),
+		check("sort_order")
+			.optional()
+			.isIn(["ASC", "DESC", "asc", "desc"])
+			.withMessage("sort_order must be ASC or DESC"),
+	],
+	validation,
+	orders.GetAllCurrentWaiterOrders
+);
+
+// Get all the orders for current logged in barista
+router.get(
+	"/barista/orders/all",
+	authMiddleware,
+	[
+		check("page")
+			.not()
+			.isEmpty()
+			.withMessage("page is required")
+			.trim()
+			.escape(),
+		check("order_status")
+			.optional()
+			.isIn(["pending", "in_progress", "completed", "cancelled", "all"])
+			.withMessage(
+				"order_status must be one of pending, in_progress, completed, cancelled, all"
+			),
+		check("order_type")
+			.optional()
+			.isIn(["dine_in", "take_away", "delivery", "all"])
+			.withMessage(
+				"order_type must be one of dine_in, take_away, delivery, all"
+			),
+		check("bill_status")
+			.optional()
+			.isIn(["unpaid", "paid", "refunded", "all"])
+			.withMessage("bill_status must be one of unpaid, paid, refunded, all"),
+		check("sort_by")
+			.optional()
+			.isString()
+			.withMessage("sort_by must be a string"),
+		check("sort_order")
+			.optional()
+			.isIn(["ASC", "DESC", "asc", "desc"])
+			.withMessage("sort_order must be ASC or DESC"),
+	],
+	validation,
+	orders.GetAllCurrentBaristaOrders
 );
 
 // Order Items routes
@@ -201,6 +303,7 @@ router.put(
 );
 
 // Get all order based on waiter
-router.get("/waiter/orders/all", authMiddleware, orders.GetWaiterOrders);
+// Not in use currently
+// router.get("/waiter/orders/all", authMiddleware, orders.GetWaiterOrders);
 
 module.exports = router;
