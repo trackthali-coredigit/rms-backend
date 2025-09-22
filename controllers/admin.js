@@ -1695,21 +1695,36 @@ const removeTable = async (req, res) => {
 		const { table_ids } = req.query;
 		console.log("table_ids", table_ids, req.query);
 		const tableIdsArray = table_ids.split(",").map((id) => id.trim());
-		for (const tableId of tableIdsArray) {
-			await db.Waiter.destroy({ where: { table_id: tableId } });
 
-			await db.Order.update(
-				{ table_id: null },
-				{ where: { table_id: tableId } }
-			);
-		}
-		// Find and destroy the tables with the provided table_ids
-		await db.Tables.destroy({
-			where: {
-				table_id: tableIdsArray,
-				business_id: user.business_id,
-			},
-		});
+		// Soft delete in the table format
+		//  We are setting is_deleted to true instead of removing the record because waiter is assigned to the table and orders are also associated with the table.
+		//  This way we maintain data integrity and can still track historical data.
+		//  If we were to hard delete, it could lead to orphaned records in related tables.
+		await db.Tables.update(
+			{ is_deleted: true },
+			{
+				where: {
+					table_id: tableIdsArray,
+					business_id: user.business_id,
+				},
+			}
+		);
+
+		// for (const tableId of tableIdsArray) {
+		// 	await db.Waiter.destroy({ where: { table_id: tableId } });
+
+		// 	await db.Order.update(
+		// 		{ table_id: null },
+		// 		{ where: { table_id: tableId } }
+		// 	);
+		// }
+		// // Find and destroy the tables with the provided table_ids
+		// await db.Tables.destroy({
+		// 	where: {
+		// 		table_id: tableIdsArray,
+		// 		business_id: user.business_id,
+		// 	},
+		// });
 
 		res
 			.status(200)
@@ -1751,13 +1766,28 @@ const assignWaiterToTables = async (req, res) => {
 		const tables = await db.Tables.findAll({
 			where: { table_id: tableIdsArray },
 		});
+
+		// Check if any tables were found
+		if (tables.length === 0) {
+			return res
+				.status(404)
+				.json({ Status: 0, message: "No valid tables found" });
+		}
+
 		// Filter out the table IDs that do not exist
 		const existingTableIds = tables.map((table) => table.table_id);
 
 		// Find the existing waiter-table assignments
 		const existingAssignments = await db.Waiter.findAll({
-			where: { user_id, table_id: existingTableIds },
+			where: { table_id: existingTableIds },
 		});
+
+		// if already assigned table to waiter
+		if (existingAssignments.length > 0) {
+			return res
+				.status(201)
+				.json({ Status: 0, message: "The Table already assigned to waiter" });
+		}
 
 		// Extract the table IDs that are already assigned to the waiter
 		const assignedTableIds = existingAssignments.map(
@@ -1765,15 +1795,19 @@ const assignWaiterToTables = async (req, res) => {
 		);
 
 		// Create entries in the waiter table for each user-table pair using a for loop
-		for (let i = 0; i < tableIdsArray.length; i++) {
-			const table_id = tableIdsArray[i];
-			if (
-				existingTableIds.includes(table_id) &&
-				!assignedTableIds.includes(table_id)
-			) {
+		for (const table_id of existingTableIds) {
+			if (!assignedTableIds.includes(table_id)) {
 				await db.Waiter.create({ user_id, table_id });
+				// Update is_assigned_to_waiter in Tables
+				await db.Tables.update(
+					{ is_assigned_to_waiter: true },
+					{ where: { table_id } }
+				);
 			}
 		}
+
+		// Update is_assigned_to_waiter in Tables
+
 		res.status(201).json({
 			Status: 1,
 			message: "The Waiters assigned to tables successfully",
@@ -1783,9 +1817,10 @@ const assignWaiterToTables = async (req, res) => {
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });
 	}
 };
+
 const editAssignWaiterToTable = async (req, res) => {
 	try {
-		const userId = req.userData.user_id; // Verify the user's token
+		const userId = req.userData.user_id;
 		const user = await db.User.findOne({
 			where: {
 				[Op.and]: [
@@ -1800,41 +1835,39 @@ const editAssignWaiterToTable = async (req, res) => {
 		}
 
 		const { user_id, table_ids } = req.body;
-		// Check if the provided waiter ID corresponds to a waiter
+
 		const waiterFound = await db.User.findByPk(user_id);
 		if (!waiterFound || waiterFound.role !== "waiter") {
 			return res
 				.status(404)
-				.json({ Status: 0, message: "The Waiter not found" });
+				.json({ Status: 0, message: "The waiter not found" });
 		}
 
-		// Split the table_ids string into an array of integers
 		const tableIdsArray = table_ids.split(",").map(Number);
 
-		// Find the existing waiter-table assignments
-		const existingAssignments = await db.Waiter.findAll({
-			where: { user_id: user_id },
+		// Find all the tables corresponding to the provided table_ids
+		const tables = await db.Tables.findAll({
+			where: { table_id: tableIdsArray, business_id: user.business_id },
 		});
 
-		// Extract the table IDs that are already assigned to the waiter
-		const assignedTableIds = existingAssignments.map(
-			(assignment) => assignment.table_id
+		if (tables.length === 0) {
+			return res
+				.status(404)
+				.json({ Status: 0, message: "No valid tables found" });
+		}
+
+		const validTableIds = tables.map((table) => table.table_id);
+
+		// Check for existing assignments to other waiters
+		// Remove all previous assignments for these tables
+		await db.Waiter.destroy({ where: { table_id: validTableIds } });
+
+		// Assign each table to the waiter (user_id)
+		const insertionPromises = validTableIds.map((table_id) =>
+			db.Waiter.create({ user_id, table_id })
 		);
-
-		if (tableIdsArray.length > 0) {
-			await db.Waiter.destroy({ where: { user_id: user_id } });
-		}
-		const insertionPromises = [];
-
-		for (const table_id of tableIdsArray) {
-			const tableExists = await db.Tables.findOne({
-				where: { table_id, business_id: user.business_id },
-			});
-
-			const insertionPromise = db.Waiter.create({ user_id, table_id });
-			insertionPromises.push(insertionPromise);
-		}
 		await Promise.all(insertionPromises);
+
 		res.status(200).json({
 			Status: 1,
 			message: "The Waiter assigned to tables successfully",
@@ -1844,6 +1877,7 @@ const editAssignWaiterToTable = async (req, res) => {
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });
 	}
 };
+
 const waitersTableList = async (req, res) => {
 	try {
 		const userId = req.userData.user_id; // Verify the user's token

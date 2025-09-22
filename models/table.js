@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
 				type: DataTypes.BOOLEAN,
 				defaultValue: false,
 			},
+			is_assigned_to_waiter: {
+				type: DataTypes.BOOLEAN,
+				defaultValue: false,
+			},
 			status: {
 				type: DataTypes.ENUM("available", "reserved", "occupied"),
 				defaultValue: "available",

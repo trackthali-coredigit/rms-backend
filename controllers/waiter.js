@@ -193,13 +193,11 @@ const waiterOrderAccept = async (req, res) => {
 				}
 			);
 		}
-		res
-			.status(200)
-			.json({
-				Status: 1,
-				message: "Order Accepted Successfully",
-				waiter_id: user_id,
-			});
+		res.status(200).json({
+			Status: 1,
+			message: "Order Accepted Successfully",
+			waiter_id: user_id,
+		});
 	} catch (error) {
 		console.error("Error accepting order:", error);
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });
@@ -224,12 +222,10 @@ const waiterOrderComplete = async (req, res) => {
 			},
 		});
 		if (!order) {
-			return res
-				.status(200)
-				.json({
-					Status: 0,
-					message: "Order not found or assigned to another waiter",
-				});
+			return res.status(200).json({
+				Status: 0,
+				message: "Order not found or assigned to another waiter",
+			});
 		}
 
 		await order.update({ order_status: "complete" });
@@ -330,8 +326,15 @@ const waiterAssignedTableList = async (req, res) => {
 		const { count, rows } = await db.Tables.findAndCountAll({
 			where: {
 				business_id: req.userData.business_id,
+				is_deleted: false,
 			},
-			attributes: ["table_id", "business_id", "table_no", "status"],
+			attributes: [
+				"table_id",
+				"business_id",
+				"table_no",
+				"status",
+				"is_assigned_to_waiter",
+			],
 			include: [
 				{
 					model: db.Waiter,
