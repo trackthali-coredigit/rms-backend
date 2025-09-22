@@ -182,6 +182,38 @@ router.get(
 	orders.GetAllCurrentWaiterOrders
 );
 
+// Get all the orders with order_status filter
+router.get(
+	"/orders/status",
+	authMiddleware,
+	[
+		check("order_status")
+			.not()
+			.isEmpty()
+			.withMessage("order_status is required")
+			.isIn(["pending", "in_progress", "completed", "cancelled", "to_do"])
+			.withMessage(
+				"order_status must be one of pending, in_progress, completed, cancelled, to_do"
+			),
+		check("page")
+			.not()
+			.isEmpty()
+			.withMessage("page is required")
+			.trim()
+			.escape(),
+		check("sort_by")
+			.optional()
+			.isString()
+			.withMessage("sort_by must be a string"),
+		check("sort_order")
+			.optional()
+			.isIn(["ASC", "DESC", "asc", "desc"])
+			.withMessage("sort_order must be ASC or DESC"),
+	],
+	validation,
+	orders.GetAllOrdersWithOrderStatus
+);
+
 // Get all the orders for current logged in barista
 router.get(
 	"/barista/orders/all",
@@ -308,5 +340,23 @@ router.put(
 // Get all order based on waiter
 // Not in use currently
 // router.get("/waiter/orders/all", authMiddleware, orders.GetWaiterOrders);
+
+// Bill Generate with passing order_id, total_price, sub_total, discount, taxes, extra_charges
+router.put(
+	"/generatebill",
+	authMiddleware,
+	[
+		check("order_id").isInt().withMessage("order_id must be an integer"),
+		check("total_price").isFloat().withMessage("total_price must be a number"),
+		check("sub_total").isFloat().withMessage("sub_total must be a number"),
+		check("discount").isFloat().withMessage("discount must be a number"),
+		check("taxes").isFloat().withMessage("taxes must be a number"),
+		check("extra_charges")
+			.isFloat()
+			.withMessage("extra_charges must be a number"),
+	],
+	validation,
+	orders.GenerateBill
+);
 
 module.exports = router;

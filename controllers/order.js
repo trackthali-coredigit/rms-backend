@@ -707,6 +707,143 @@ const GetAllCurrentBaristaOrders = async (req, res) => {
 	}
 };
 
+// GET all order where order_status is "to_do"
+const GetAllOrdersWithOrderStatus = async (req, res) => {
+	try {
+		console.log("im in get all orders with status controller");
+		const current_user_id = req.userData.user_id;
+		const business_id = req.userData.business_id;
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id: current_user_id },
+					{ business_id },
+					{
+						[Op.or]: [
+							{ role: "waiter" },
+							{ role: "admin" },
+							{ role: "barista" },
+							{ role: "supervisor" },
+						],
+					},
+				],
+			},
+		});
+		if (!user) {
+			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
+
+		const { page, sort_by, sort_order, order_status = "to_do" } = req.body;
+		const pageSize = 20;
+		let currentPage = parseInt(page, 10) || 1;
+		if (currentPage < 1) currentPage = 1;
+		const offset = (currentPage - 1) * pageSize;
+
+		// Sorting
+		let order = [["updatedAt", "DESC"]];
+		if (sort_by) {
+			const validSortOrder =
+				sort_order && ["ASC", "DESC"].includes(sort_order.toUpperCase())
+					? sort_order.toUpperCase()
+					: "DESC";
+			order = [[sort_by, validSortOrder]];
+		}
+
+		const where = {
+			business_id,
+			order_status,
+		};
+
+		const { count, rows } = await db.Order.findAndCountAll({
+			where,
+			include: [
+				{
+					model: db.Order_Item,
+					as: "order_items_models",
+					required: false,
+					include: [
+						{
+							model: db.User,
+							attributes: ["user_id", "first_name", "last_name", "role"],
+							required: false,
+						},
+					],
+				},
+				{
+					model: db.User,
+					attributes: ["user_id", "role", "first_name", "last_name"],
+					required: false,
+				},
+				{
+					model: db.Waiter,
+					attributes: ["id", "user_id"],
+					required: false,
+					include: [
+						{
+							model: db.User,
+							as: "users_model",
+							attributes: ["user_id", "first_name", "last_name", "role"],
+							required: false,
+						},
+					],
+				},
+				{
+					model: db.Business,
+					attributes: ["business_id", "business_name", "tax"],
+					required: false,
+				},
+			],
+			distinct: true,
+			limit: pageSize,
+			offset,
+			order,
+		});
+
+		// Fetch ingrediant data for each order item (if ingrediant_id is comma separated)
+		for (const order of rows) {
+			if (order.order_items_models && Array.isArray(order.order_items_models)) {
+				for (const item of order.order_items_models) {
+					if (item.ingrediant_id) {
+						const ingrediantIds = item.ingrediant_id
+							.split(",")
+							.map((id) => id.trim())
+							.filter((id) => id);
+						if (ingrediantIds.length > 0) {
+							item.dataValues.ingrediant_models = await db.Ingrediant.findAll({
+								where: { ingrediant_id: ingrediantIds },
+								attributes: ["ingrediant_id", "name", "price"],
+							});
+						} else {
+							item.dataValues.ingrediant_models = [];
+						}
+					} else {
+						item.dataValues.ingrediant_models = [];
+					}
+				}
+			}
+		}
+
+		const totalPages = Math.ceil(count / pageSize);
+
+		if (!rows || rows.length === 0) {
+			return res
+				.status(404)
+				.json({ Status: 0, message: "No To-Do Orders Found" });
+		}
+		return res.status(200).json({
+			Status: 1,
+			message: "To-Do Orders fetched successfully",
+			current_page: currentPage,
+			total_pages: totalPages,
+			orders: rows,
+			total: count,
+		});
+	} catch (error) {
+		console.error("Error getting to-do orders:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
+};
+
 const MakeOrderItem = async (req, res) => {
 	try {
 		console.log("im in make order item controller");
@@ -1111,6 +1248,66 @@ const GetWaiterOrders = async (req, res) => {
 	}
 };
 
+// Generate Bill
+const GenerateBill = async (req, res) => {
+	try {
+		console.log("im in generate bill controller");
+		const current_user_id = req.userData.user_id;
+		const business_id = req.userData.business_id;
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id: current_user_id },
+					{
+						[Op.or]: [
+							{ role: "waiter" },
+							{ role: "admin" },
+							{ role: "supervisor" },
+						],
+					},
+				],
+			},
+		});
+		if (!user) {
+			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
+		// Proceed with bill generation
+		const { order_id, total_price, sub_total, discount, taxes, extra_charges } =
+			req.body;
+		const order = await db.Order.findOne({ where: { order_id, business_id } });
+		if (!order) {
+			return res.status(404).json({ Status: 0, message: "Order Not Found" });
+		}
+
+		if (order.order_status !== "complete") {
+			return res
+				.status(400)
+				.json({ Status: 0, message: "Only completed orders can be billed" });
+		}
+
+		await db.Order.update(
+			{
+				bill_status: "unpaid",
+				total_price,
+				sub_total,
+				discount,
+				taxes,
+				extra_charges,
+			},
+			{
+				where: { order_id, business_id },
+			}
+		);
+
+		return res
+			.status(201)
+			.json({ Status: 1, message: "Bill Generated Successfully" });
+	} catch (error) {
+		console.error("Error generating bill:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
+};
+
 module.exports = {
 	MakeOrder,
 	UpdateOrder,
@@ -1119,11 +1316,13 @@ module.exports = {
 	GetAllCurrentWaiterOrders,
 	GetAllCurrentBaristaOrders,
 	GetOrderDetails,
+	GetAllOrdersWithOrderStatus,
 	MakeOrderItem,
 	UpdateOrderItem,
 	DeleteOrderItem,
 	BaristaOrderAccept,
 	GetBaristaOrderItems,
 	WaiterOrderComplete,
+	GenerateBill,
 	// GetWaiterOrders,
 };

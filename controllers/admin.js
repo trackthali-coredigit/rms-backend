@@ -913,6 +913,19 @@ const deleteItemImage = async (req, res) => {
 	try {
 		const { imageId } = req.body;
 
+		const user_id = req.userData.user_id;
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id },
+					{ [Op.or]: [{ role: "admin" }, { role: "supervisor" }] },
+				],
+			},
+		});
+		if (!user) {
+			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
+
 		// Find the image by ID
 		const image = await db.Item_Img.findByPk(imageId);
 		if (!image) {
@@ -933,6 +946,19 @@ const deleteItemImage = async (req, res) => {
 const deleteIngredient = async (req, res) => {
 	try {
 		const { ingredientId } = req.body;
+
+		const user_id = req.userData.user_id;
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id },
+					{ [Op.or]: [{ role: "admin" }, { role: "supervisor" }] },
+				],
+			},
+		});
+		if (!user) {
+			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
 
 		// Find the ingredient by ID
 		const ingredient = await db.Ingrediant.findByPk(ingredientId);
@@ -1031,7 +1057,8 @@ const getCategoryList = async (req, res) => {
 							[Op.or]: [
 								{ role: "admin" },
 								{ role: "supervisor" },
-								{ role: "user" },
+								{ role: "waiter" },
+								{ role: "barista" },
 							],
 						},
 					],
@@ -1125,7 +1152,8 @@ const getItemList = async (req, res) => {
 							[Op.or]: [
 								{ role: "admin" },
 								{ role: "supervisor" },
-								{ role: "user" },
+								{ role: "waiter" },
+								{ role: "barista" },
 							],
 						},
 					],
@@ -2631,7 +2659,7 @@ module.exports = {
 	getCategoryList,
 	getItemList,
 	getItemDetails,
-	
+
 	addStaff,
 	getStaffList,
 	editStaffProfile,

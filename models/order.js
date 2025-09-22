@@ -50,7 +50,7 @@ module.exports = (sequelize, DataTypes) => {
 					args: [["unpaid", "paid", "void"]],
 					msg: "select valid bill status",
 				},
-				defaultValue: "unpaid",
+				defaultValue: "void",
 			},
 			sub_total: {
 				type: DataTypes.DOUBLE,
