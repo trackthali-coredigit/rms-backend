@@ -1491,6 +1491,159 @@
         }
       }
     },
+    "/filter": {
+      "get": {
+        "summary": "Filter orders",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": false,
+            "description": "Page number for pagination"
+          },
+          {
+            "in": "query",
+            "name": "order_status",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Status of the order"
+          },
+          {
+            "in": "query",
+            "name": "order_type",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Type of the order"
+          },
+          {
+            "in": "query",
+            "name": "bill_status",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Bill status"
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Field to sort by"
+          },
+          {
+            "in": "query",
+            "name": "sort_order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            },
+            "required": false,
+            "description": "Sort order"
+          },
+          {
+            "in": "query",
+            "name": "field",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Field to filter"
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false,
+            "description": "Start date for filtering"
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false,
+            "description": "End date for filtering"
+          },
+          {
+            "in": "query",
+            "name": "select_date",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Specific date selection"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order list fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "current_page": {
+                      "type": "integer"
+                    },
+                    "total_pages": {
+                      "type": "integer"
+                    },
+                    "orders": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "total_orders": {
+                      "type": "integer"
+                    },
+                    "total_amount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "404": {
+            "description": "Orders not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/waiterAssignedTableList": {
       "get": {
         "summary": "Get waiter assigned table list",

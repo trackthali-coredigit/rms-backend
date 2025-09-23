@@ -1440,6 +1440,7 @@ router.post(
 );
 
 //------------------------------------------------Filter Routes------------------------------------------------//
+
 /**
  * @swagger
  * /filter:
@@ -1452,66 +1453,64 @@ router.post(
  *         schema:
  *           type: integer
  *         required: false
- *         description: Page number for pagination (default: 1)
+ *         description: Page number for pagination
  *       - in: query
  *         name: order_status
  *         schema:
  *           type: string
  *         required: false
- *         description: Filter by order status (e.g., complete, pending)
+ *         description: Status of the order
  *       - in: query
  *         name: order_type
  *         schema:
  *           type: string
  *         required: false
- *         description: Filter by order type (e.g., dine-in, takeaway)
+ *         description: Type of the order
  *       - in: query
  *         name: bill_status
  *         schema:
  *           type: string
  *         required: false
- *         description: Filter by bill status (e.g., paid, unpaid)
+ *         description: Bill status
  *       - in: query
  *         name: sort_by
  *         schema:
  *           type: string
  *         required: false
- *         description: Field to sort by (e.g., updatedAt)
+ *         description: Field to sort by
  *       - in: query
  *         name: sort_order
  *         schema:
  *           type: string
- *           enum: [ASC, DESC]
+ *           enum: [asc, desc]
  *         required: false
- *         description: Sort order (ASC or DESC)
+ *         description: Sort order
  *       - in: query
  *         name: field
  *         schema:
  *           type: string
- *           enum: [today, previous_day, this_month, last_month, this_year, last_year, custom, select_date]
  *         required: false
- *         description: Date filter field
+ *         description: Field to filter
  *       - in: query
  *         name: start_date
  *         schema:
  *           type: string
  *           format: date
  *         required: false
- *         description: Start date for custom date filter (YYYY-MM-DD)
+ *         description: Start date for filtering
  *       - in: query
  *         name: end_date
  *         schema:
  *           type: string
  *           format: date
  *         required: false
- *         description: End date for custom date filter (YYYY-MM-DD)
+ *         description: End date for filtering
  *       - in: query
  *         name: select_date
  *         schema:
  *           type: string
- *           format: date
  *         required: false
- *         description: Specific date for select_date filter (YYYY-MM-DD)
+ *         description: Specific date selection
  *     responses:
  *       200:
  *         description: Order list fetched successfully
@@ -1543,7 +1542,36 @@ router.post(
  *       500:
  *         description: Internal server error
  */
-router.get("/filter", authMiddleware, admin.filter);
+router.get(
+	"/filter",
+	[
+		check("page")
+			.optional()
+			.isInt({ min: 1 })
+			.withMessage("Page must be a positive integer"),
+		check("order_status").optional().trim().escape(),
+		check("order_type").optional().trim().escape(),
+		check("bill_status").optional().trim().escape(),
+		check("sort_by").optional().trim().escape(),
+		check("sort_order")
+			.optional()
+			.isIn(["asc", "desc"])
+			.withMessage("Sort order must be 'asc' or 'desc'"),
+		check("field").optional().trim().escape(),
+		check("start_date")
+			.optional()
+			.isISO8601()
+			.withMessage("Start date must be a valid date"),
+		check("end_date")
+			.optional()
+			.isISO8601()
+			.withMessage("End date must be a valid date"),
+		check("select_date").optional().trim().escape(),
+	],
+	validation,
+	authMiddleware,
+	admin.filter
+);
 
 //------------------------------------------------Contact Us Routes------------------------------------------------//
 // TODO: Contact us route is commented as per the current requirement
