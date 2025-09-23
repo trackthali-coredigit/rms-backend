@@ -14,6 +14,42 @@ const validation = (req, res, next) => {
 };
 const orders = require("../controllers/order");
 
+/**
+ * @swagger
+ * /makeorder:
+ *   post:
+ *     summary: Create a new order
+ *     tags: [Order]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - order_type
+ *               - user_id
+ *               - waiter_id
+ *             properties:
+ *               order_type:
+ *                 type: string
+ *                 enum: [dine_in, take_away, delivery]
+ *               table_id:
+ *                 type: integer
+ *               user_id:
+ *                 type: integer
+ *               barista_id:
+ *                 type: integer
+ *               waiter_id:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Order created successfully
+ *       422:
+ *         description: Validation error
+ */
 router.post(
 	"/makeorder",
 	authMiddleware,
@@ -52,16 +88,18 @@ router.post(
  * /updateorder/{order_id}:
  *   put:
  *     summary: Update an existing order
+ *     tags: [Order]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: order_id
  *         required: true
- *         description: The ID of the order to update
  *         schema:
  *           type: integer
+ *         description: The ID of the order to update
  *     requestBody:
  *       required: true
- *       description: Order update details are fully dynamic and can include any of the table fields, every field is optional only pass those field with correct value what will you like to update
  *       content:
  *         application/json:
  *           schema:
@@ -100,9 +138,73 @@ router.post(
  */
 router.put("/updateorder/:order_id", authMiddleware, orders.UpdateOrder);
 
+/**
+ * @swagger
+ * /deleteorder/{order_id}:
+ *   delete:
+ *     summary: Delete an order
+ *     tags: [Order]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: order_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order to delete
+ *     responses:
+ *       200:
+ *         description: Order deleted successfully
+ *       404:
+ *         description: Order not found
+ */
 router.delete("/deleteorder/:order_id", authMiddleware, orders.DeleteOrder);
 
-// Get all the order with appropriate filters and pagination
+/**
+ * @swagger
+ * /admin/orders/all:
+ *   get:
+ *     summary: Get all orders with filters and pagination (Admin)
+ *     tags: [Order]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: order_status
+ *         schema:
+ *           type: string
+ *           enum: [pending, in_progress, complete, cancelled, all]
+ *       - in: query
+ *         name: order_type
+ *         schema:
+ *           type: string
+ *           enum: [dine_in, take_away, delivery, all]
+ *       - in: query
+ *         name: bill_status
+ *         schema:
+ *           type: string
+ *           enum: [unpaid, paid, refunded, all]
+ *       - in: query
+ *         name: sort_by
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sort_order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC, asc, desc]
+ *     responses:
+ *       200:
+ *         description: Orders fetched successfully
+ *       422:
+ *         description: Validation error
+ */
 router.get(
 	"/admin/orders/all",
 	authMiddleware,
@@ -142,7 +244,50 @@ router.get(
 	orders.GetAllOrders
 );
 
-// Get all the orders for current logged in waiter
+/**
+ * @swagger
+ * /waiter/orders/all:
+ *   get:
+ *     summary: Get all orders for the current logged in waiter
+ *     tags: [Order]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: order_status
+ *         schema:
+ *           type: string
+ *           enum: [pending, in_progress, completed, cancelled, all]
+ *       - in: query
+ *         name: order_type
+ *         schema:
+ *           type: string
+ *           enum: [dine_in, take_away, delivery, all]
+ *       - in: query
+ *         name: bill_status
+ *         schema:
+ *           type: string
+ *           enum: [unpaid, paid, refunded, all]
+ *       - in: query
+ *         name: sort_by
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sort_order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC, asc, desc]
+ *     responses:
+ *       200:
+ *         description: Orders fetched successfully
+ *       422:
+ *         description: Validation error
+ */
 router.get(
 	"/waiter/orders/all",
 	authMiddleware,
@@ -182,7 +327,41 @@ router.get(
 	orders.GetAllCurrentWaiterOrders
 );
 
-// Get all the orders with order_status filter
+/**
+ * @swagger
+ * /orders/status:
+ *   get:
+ *     summary: Get all orders filtered by order status
+ *     tags: [Order]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: order_status
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [pending, in_progress, completed, cancelled, to_do]
+ *       - in: query
+ *         name: page
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: sort_by
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sort_order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC, asc, desc]
+ *     responses:
+ *       200:
+ *         description: Orders fetched successfully
+ *       422:
+ *         description: Validation error
+ */
 router.get(
 	"/orders/status",
 	authMiddleware,
@@ -214,7 +393,50 @@ router.get(
 	orders.GetAllOrdersWithOrderStatus
 );
 
-// Get all the orders for current logged in barista
+/**
+ * @swagger
+ * /barista/orders/all:
+ *   get:
+ *     summary: Get all orders for the current logged in barista
+ *     tags: [Order]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: order_status
+ *         schema:
+ *           type: string
+ *           enum: [pending, in_progress, completed, cancelled, all]
+ *       - in: query
+ *         name: order_type
+ *         schema:
+ *           type: string
+ *           enum: [dine_in, take_away, delivery, all]
+ *       - in: query
+ *         name: bill_status
+ *         schema:
+ *           type: string
+ *           enum: [unpaid, paid, refunded, all]
+ *       - in: query
+ *         name: sort_by
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sort_order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC, asc, desc]
+ *     responses:
+ *       200:
+ *         description: Orders fetched successfully
+ *       422:
+ *         description: Validation error
+ */
 router.get(
 	"/barista/orders/all",
 	authMiddleware,
@@ -254,10 +476,70 @@ router.get(
 	orders.GetAllCurrentBaristaOrders
 );
 
-// Get single order details
+/**
+ * @swagger
+ * /order/{order_id}:
+ *   get:
+ *     summary: Get details of a single order
+ *     tags: [Order]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: order_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     responses:
+ *       200:
+ *         description: Order details fetched successfully
+ *       404:
+ *         description: Order not found
+ */
 router.get("/order/:order_id", authMiddleware, orders.GetOrderDetails);
 
-// Order Items routes
+/**
+ * @swagger
+ * /makeorderitem:
+ *   post:
+ *     summary: Add an item to an order
+ *     tags: [OrderItem]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - order_id
+ *               - item_id
+ *               - quantity
+ *               - price
+ *               - item_name
+ *             properties:
+ *               order_id:
+ *                 type: integer
+ *               item_id:
+ *                 type: integer
+ *               item_image:
+ *                 type: string
+ *               note:
+ *                 type: string
+ *               quantity:
+ *                 type: integer
+ *               price:
+ *                 type: number
+ *               item_name:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Order item created successfully
+ *       422:
+ *         description: Validation error
+ */
 router.post(
 	"/makeorderitem",
 	authMiddleware,
@@ -280,19 +562,109 @@ router.post(
 	orders.MakeOrderItem
 );
 
+/**
+ * @swagger
+ * /updateorderitem/{order_item_id}:
+ *   put:
+ *     summary: Update an order item
+ *     tags: [OrderItem]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: order_item_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order item to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               quantity:
+ *                 type: integer
+ *               price:
+ *                 type: number
+ *               note:
+ *                 type: string
+ *               item_image:
+ *                 type: string
+ *               order_item_status:
+ *                 type: string
+ *                 enum: [to_do, in_making, ready_to_serve, served, cancelled]
+ *     responses:
+ *       200:
+ *         description: Order item updated successfully
+ *       404:
+ *         description: Order item not found
+ */
 router.put(
 	"/updateorderitem/:order_item_id",
 	authMiddleware,
 	orders.UpdateOrderItem
 );
 
+/**
+ * @swagger
+ * /deleteorderitem/{order_item_id}:
+ *   delete:
+ *     summary: Delete an order item
+ *     tags: [OrderItem]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: order_item_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order item to delete
+ *     responses:
+ *       200:
+ *         description: Order item deleted successfully
+ *       404:
+ *         description: Order item not found
+ */
 router.delete(
 	"/deleteorderitem/:order_item_id",
 	authMiddleware,
 	orders.DeleteOrderItem
 );
 
-// Barista routes
+/**
+ * @swagger
+ * /barista/order/accept:
+ *   put:
+ *     summary: Barista accepts an order item
+ *     tags: [OrderItem]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - order_id
+ *               - orderItem_id
+ *               - barista_id
+ *             properties:
+ *               order_id:
+ *                 type: integer
+ *               orderItem_id:
+ *                 type: integer
+ *               barista_id:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Order item accepted by barista
+ *       422:
+ *         description: Validation error
+ */
 router.put(
 	"/barista/order/accept",
 	authMiddleware,
@@ -307,6 +679,39 @@ router.put(
 	orders.BaristaOrderAccept
 );
 
+/**
+ * @swagger
+ * /orderitem/status/{order_item_id}:
+ *   put:
+ *     summary: Update status of an order item
+ *     tags: [OrderItem]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: order_item_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order item
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - order_item_status
+ *             properties:
+ *               order_item_status:
+ *                 type: string
+ *                 enum: [to_do, in_making, ready_to_serve, served, cancelled]
+ *     responses:
+ *       200:
+ *         description: Order item status updated successfully
+ *       422:
+ *         description: Validation error
+ */
 router.put(
 	"/orderitem/status/:order_item_id",
 	authMiddleware,
@@ -321,10 +726,53 @@ router.put(
 	orders.UpdateOrderItem
 );
 
-// Access all order_items for barista
+/**
+ * @swagger
+ * /barista/orderitems:
+ *   get:
+ *     summary: Get all order items for barista
+ *     tags: [OrderItem]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Order items fetched successfully
+ */
 router.get("/barista/orderitems", authMiddleware, orders.GetBaristaOrderItems);
 
-// waiter order completed route
+/**
+ * @swagger
+ * /waiter/order/{order_id}/complete:
+ *   put:
+ *     summary: Mark an order as completed by waiter
+ *     tags: [Order]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: order_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - order_status
+ *             properties:
+ *               order_status:
+ *                 type: string
+ *                 enum: [complete]
+ *     responses:
+ *       200:
+ *         description: Order marked as complete
+ *       422:
+ *         description: Validation error
+ */
 router.put(
 	"/waiter/order/:order_id/complete",
 	authMiddleware,
@@ -337,11 +785,46 @@ router.put(
 	orders.WaiterOrderComplete
 );
 
-// Get all order based on waiter
-// Not in use currently
-// router.get("/waiter/orders/all", authMiddleware, orders.GetWaiterOrders);
-
-// Bill Generate with passing order_id, total_price, sub_total, discount, taxes, extra_charges
+/**
+ * @swagger
+ * /generatebill:
+ *   put:
+ *     summary: Generate bill for an order
+ *     tags: [Order]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - order_id
+ *               - total_price
+ *               - sub_total
+ *               - discount
+ *               - taxes
+ *               - extra_charges
+ *             properties:
+ *               order_id:
+ *                 type: integer
+ *               total_price:
+ *                 type: number
+ *               sub_total:
+ *                 type: number
+ *               discount:
+ *                 type: number
+ *               taxes:
+ *                 type: number
+ *               extra_charges:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Bill generated successfully
+ *       422:
+ *         description: Validation error
+ */
 router.put(
 	"/generatebill",
 	authMiddleware,
@@ -359,6 +842,39 @@ router.put(
 	orders.GenerateBill
 );
 
+/**
+ * @swagger
+ * /paybill:
+ *   put:
+ *     summary: Pay bill for an order
+ *     tags: [Order]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - order_id
+ *               - payment_method
+ *               - bill_status
+ *             properties:
+ *               order_id:
+ *                 type: integer
+ *               payment_method:
+ *                 type: string
+ *                 enum: [credit_card, debit_card, upi, cash]
+ *               bill_status:
+ *                 type: string
+ *                 enum: [paid, void]
+ *     responses:
+ *       200:
+ *         description: Bill paid successfully
+ *       422:
+ *         description: Validation error
+ */
 router.put(
 	"/paybill",
 	authMiddleware,
