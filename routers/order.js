@@ -359,4 +359,22 @@ router.put(
 	orders.GenerateBill
 );
 
+router.put(
+	"/paybill",
+	authMiddleware,
+	[
+		check("order_id").isInt().withMessage("order_id must be an integer"),
+		check("payment_method")
+			.isIn(["credit_card", "debit_card", "upi", "cash"])
+			.withMessage(
+				"payment_method must be one of credit_card, debit_card, upi, cash"
+			),
+		check("bill_status")
+			.isIn(["paid", "void"])
+			.withMessage("bill_status must be one of paid, void"),
+	],
+	validation,
+	orders.PayBill
+);
+
 module.exports = router;

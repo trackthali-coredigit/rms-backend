@@ -1308,6 +1308,63 @@ const GenerateBill = async (req, res) => {
 	}
 };
 
+// bill payment done by admin
+const PayBill = async (req, res) => {
+	try {
+		console.log("im in pay bill controller");
+		const current_user_id = req.userData.user_id;
+		const business_id = req.userData.business_id;
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [{ user_id: current_user_id }, { role: "admin" }],
+			},
+		});
+		if (!user) {
+			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
+		// Proceed with bill payment
+		const { order_id, payment_method, bill_status } = req.body;
+		const order = await db.Order.findOne({ where: { order_id, business_id } });
+		if (!order) {
+			return res.status(404).json({ Status: 0, message: "Order Not Found" });
+		}
+		if (order.order_status !== "complete") {
+			return res
+				.status(400)
+				.json({ Status: 0, message: "Only completed orders can be paid" });
+		}
+
+		await db.Order.update(
+			{
+				bill_status,
+				payment_method,
+				payment_status: true,
+			},
+			{
+				where: { order_id, business_id },
+			}
+		);
+
+		await db.Tables.update(
+			{ status: "available" },
+			{ where: { table_id: order.table_id, business_id } }
+		);
+
+		// Emit socket event for bill payment
+		try {
+			await emitToSockets(current_user_id, "bill_paid", { order_id });
+		} catch (e) {
+			console.error("Socket emit error (PayBill):", e);
+		}
+		return res
+			.status(200)
+			.json({ Status: 1, message: "Bill Paid Successfully" });
+	} catch (error) {
+		console.error("Error paying bill:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
+};
+
 module.exports = {
 	MakeOrder,
 	UpdateOrder,
@@ -1324,5 +1381,6 @@ module.exports = {
 	GetBaristaOrderItems,
 	WaiterOrderComplete,
 	GenerateBill,
+	PayBill,
 	// GetWaiterOrders,
 };

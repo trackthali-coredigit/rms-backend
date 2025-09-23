@@ -72,6 +72,14 @@ module.exports = (sequelize, DataTypes) => {
 				type: DataTypes.BOOLEAN,
 				defaultValue: false,
 			},
+			payment_method: {
+				type: DataTypes.ENUM("credit_card", "debit_card", "upi", "cash"),
+				defaultValue: null,
+				isIn: {
+					args: [["credit_card", "debit_card", "upi", "cash"]],
+					msg: "select valid payment method",
+				},
+			},
 			// Customer placing the order role is 'user'
 			user_id: {
 				type: DataTypes.INTEGER,
