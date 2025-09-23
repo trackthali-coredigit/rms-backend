@@ -41,11 +41,12 @@ socketConfig(io);
 
 app.use("/", superAdmin_router);
 app.use("/", admin_router);
-app.use("/", barista_router);
 app.use("/", waiter_router);
-app.use("/", user_router);
 app.use("/", order_router);
 app.use("/", customer_router);
+// TODO: As per updated flow barista and user does not need to access order routes as of now
+// app.use("/", barista_router);
+// app.use("/", user_router);
 
 app.use("/api-docs", swaggerUi.serve, async (_req, res, next) => {
 	try {

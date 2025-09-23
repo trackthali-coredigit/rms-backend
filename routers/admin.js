@@ -1439,128 +1439,6 @@ router.post(
 	admin.businessHours
 );
 
-//------------------------------------------------Contact Us Routes------------------------------------------------//
-/**
- * @swagger
- * /contactUs:
- *   post:
- *     summary: Contact support
- *     tags: [Admin]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               subjects:
- *                 type: string
- *               message:
- *                 type: string
- *     responses:
- *       200:
- *         description: Message sent successfully
- *       400:
- *         description: Validation error
- *       500:
- *         description: Internal server error
- */
-router.post(
-	"/contactUs",
-	[
-		check("subjects")
-			.not()
-			.isEmpty()
-			.withMessage("Subject is required")
-			.trim()
-			.escape(),
-		check("message")
-			.not()
-			.isEmpty()
-			.withMessage("Message is required")
-			.trim()
-			.escape(),
-	],
-	validation,
-	authMiddleware,
-	admin.contactUs
-);
-
-//------------------------------------------------Order Routes------------------------------------------------//
-/**
- * @swagger
- * /orderDetails:
- *   get:
- *     summary: Get order details
- *     tags: [Admin]
- *     parameters:
- *       - in: query
- *         name: order_id
- *         schema:
- *           type: integer
- *         required: true
- *         description: ID of the order to retrieve details for
- *     responses:
- *       200:
- *         description: Order details retrieved successfully
- *       404:
- *         description: Order not found
- *       500:
- *         description: Internal server error
- */
-router.get(
-	"/orderDetails",
-	[
-		check("order_id")
-			.not()
-			.isEmpty()
-			.withMessage("Order ID is required")
-			.isNumeric()
-			.withMessage("Order ID not valid")
-			.trim()
-			.escape(),
-	],
-	validation,
-	authMiddleware,
-	admin.orderDetails
-);
-
-/**
- * @swagger
- * /orderHistory:
- *   get:
- *     summary: Get order history
- *     tags: [Admin]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *         required: true
- *         description: Page number for pagination
- *     responses:
- *       200:
- *         description: Order history retrieved successfully
- *       404:
- *         description: No orders found
- *       500:
- *         description: Internal server error
- */
-router.get(
-	"/orderHistory",
-	[
-		check("page")
-			.not()
-			.isEmpty()
-			.withMessage("page is required")
-			.trim()
-			.escape(),
-	],
-	validation,
-	authMiddleware,
-	admin.orderHistory
-);
-
 //------------------------------------------------Filter Routes------------------------------------------------//
 /**
  * @swagger
@@ -1570,209 +1448,409 @@ router.get(
  *     tags: [Admin]
  *     parameters:
  *       - in: query
- *         name: status
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         required: false
+ *         description: Page number for pagination (default: 1)
+ *       - in: query
+ *         name: order_status
  *         schema:
  *           type: string
  *         required: false
- *         description: Filter by order status
+ *         description: Filter by order status (e.g., complete, pending)
  *       - in: query
- *         name: dateRange
+ *         name: order_type
  *         schema:
- *           type: array
- *           items:
- *             type: string
- *             format: date
+ *           type: string
  *         required: false
- *         description: Filter by date range
+ *         description: Filter by order type (e.g., dine-in, takeaway)
+ *       - in: query
+ *         name: bill_status
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Filter by bill status (e.g., paid, unpaid)
+ *       - in: query
+ *         name: sort_by
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Field to sort by (e.g., updatedAt)
+ *       - in: query
+ *         name: sort_order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *         required: false
+ *         description: Sort order (ASC or DESC)
+ *       - in: query
+ *         name: field
+ *         schema:
+ *           type: string
+ *           enum: [today, previous_day, this_month, last_month, this_year, last_year, custom, select_date]
+ *         required: false
+ *         description: Date filter field
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: false
+ *         description: Start date for custom date filter (YYYY-MM-DD)
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: false
+ *         description: End date for custom date filter (YYYY-MM-DD)
+ *       - in: query
+ *         name: select_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: false
+ *         description: Specific date for select_date filter (YYYY-MM-DD)
  *     responses:
  *       200:
- *         description: Orders filtered successfully
+ *         description: Order list fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 current_page:
+ *                   type: integer
+ *                 total_pages:
+ *                   type: integer
+ *                 orders:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 total_orders:
+ *                   type: integer
+ *                 total_amount:
+ *                   type: number
+ *       400:
+ *         description: Validation error
  *       404:
- *         description: No orders found
+ *         description: Orders not found
  *       500:
  *         description: Internal server error
  */
 router.get("/filter", authMiddleware, admin.filter);
 
+//------------------------------------------------Contact Us Routes------------------------------------------------//
+// TODO: Contact us route is commented as per the current requirement
+// /**
+//  * @swagger
+//  * /contactUs:
+//  *   post:
+//  *     summary: Contact support
+//  *     tags: [Admin]
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         application/json:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               subjects:
+//  *                 type: string
+//  *               message:
+//  *                 type: string
+//  *     responses:
+//  *       200:
+//  *         description: Message sent successfully
+//  *       400:
+//  *         description: Validation error
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.post(
+// 	"/contactUs",
+// 	[
+// 		check("subjects")
+// 			.not()
+// 			.isEmpty()
+// 			.withMessage("Subject is required")
+// 			.trim()
+// 			.escape(),
+// 		check("message")
+// 			.not()
+// 			.isEmpty()
+// 			.withMessage("Message is required")
+// 			.trim()
+// 			.escape(),
+// 	],
+// 	validation,
+// 	authMiddleware,
+// 	admin.contactUs
+// );
+
+//------------------------------------------------Order Routes------------------------------------------------//
+// TODO: Order routes are commented as per the current requirement
+// /**
+//  * @swagger
+//  * /orderDetails:
+//  *   get:
+//  *     summary: Get order details
+//  *     tags: [Admin]
+//  *     parameters:
+//  *       - in: query
+//  *         name: order_id
+//  *         schema:
+//  *           type: integer
+//  *         required: true
+//  *         description: ID of the order to retrieve details for
+//  *     responses:
+//  *       200:
+//  *         description: Order details retrieved successfully
+//  *       404:
+//  *         description: Order not found
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.get(
+// 	"/orderDetails",
+// 	[
+// 		check("order_id")
+// 			.not()
+// 			.isEmpty()
+// 			.withMessage("Order ID is required")
+// 			.isNumeric()
+// 			.withMessage("Order ID not valid")
+// 			.trim()
+// 			.escape(),
+// 	],
+// 	validation,
+// 	authMiddleware,
+// 	admin.orderDetails
+// );
+
+// /**
+//  * @swagger
+//  * /orderHistory:
+//  *   get:
+//  *     summary: Get order history
+//  *     tags: [Admin]
+//  *     parameters:
+//  *       - in: query
+//  *         name: page
+//  *         schema:
+//  *           type: integer
+//  *         required: true
+//  *         description: Page number for pagination
+//  *     responses:
+//  *       200:
+//  *         description: Order history retrieved successfully
+//  *       404:
+//  *         description: No orders found
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.get(
+// 	"/orderHistory",
+// 	[
+// 		check("page")
+// 			.not()
+// 			.isEmpty()
+// 			.withMessage("page is required")
+// 			.trim()
+// 			.escape(),
+// 	],
+// 	validation,
+// 	authMiddleware,
+// 	admin.orderHistory
+// );
+
 // ------------------------------------------------Promo Code Routes------------------------------------------------//
-/**
- * @swagger
- * /addPromoCode:
- *   post:
- *     summary: Add a new promo code
- *     tags: [Admin]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               code:
- *                 type: string
- *               name:
- *                 type: string
- *               description:
- *                 type: string
- *               discount:
- *                 type: number
- *               expiresAt:
- *                 type: string
- *                 format: date
- *     responses:
- *       201:
- *         description: Promo code created successfully
- *       400:
- *         description: Validation error
- *       500:
- *         description: Internal server error
- */
-router.post(
-	"/addPromoCode",
-	// [
-	//   check("code")
-	//     .not()
-	//     .isEmpty()
-	//     .withMessage("code is required")
-	//     .trim()
-	//     .escape(),
-	//   check("name")
-	//     .not()
-	//     .isEmpty()
-	//     .withMessage("name is required")
-	//     .trim()
-	//     .escape(),
-	//   check("description")
-	//     .not()
-	//     .isEmpty()
-	//     .withMessage("description is required")
-	//     .trim()
-	//     .escape(),
-	//   check("discount")
-	//     .not()
-	//     .isEmpty()
-	//     .withMessage("discount is required")
-	//     .trim()
-	//     .escape(),
-	//   check("expiresAt")
-	//     .not()
-	//     .isEmpty()
-	//     .withMessage("expiresAt is required")
-	//     .trim()
-	//     .escape(),
-	// ],
-	// validation,
-	authMiddleware,
-	admin.addPromoCode
-);
+//TODO: Promocode routes are commented as per the current requirement
+// /**
+//  * @swagger
+//  * /addPromoCode:
+//  *   post:
+//  *     summary: Add a new promo code
+//  *     tags: [Admin]
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         application/json:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               code:
+//  *                 type: string
+//  *               name:
+//  *                 type: string
+//  *               description:
+//  *                 type: string
+//  *               discount:
+//  *                 type: number
+//  *               expiresAt:
+//  *                 type: string
+//  *                 format: date
+//  *     responses:
+//  *       201:
+//  *         description: Promo code created successfully
+//  *       400:
+//  *         description: Validation error
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.post(
+// 	"/addPromoCode",
+// 	// [
+// 	//   check("code")
+// 	//     .not()
+// 	//     .isEmpty()
+// 	//     .withMessage("code is required")
+// 	//     .trim()
+// 	//     .escape(),
+// 	//   check("name")
+// 	//     .not()
+// 	//     .isEmpty()
+// 	//     .withMessage("name is required")
+// 	//     .trim()
+// 	//     .escape(),
+// 	//   check("description")
+// 	//     .not()
+// 	//     .isEmpty()
+// 	//     .withMessage("description is required")
+// 	//     .trim()
+// 	//     .escape(),
+// 	//   check("discount")
+// 	//     .not()
+// 	//     .isEmpty()
+// 	//     .withMessage("discount is required")
+// 	//     .trim()
+// 	//     .escape(),
+// 	//   check("expiresAt")
+// 	//     .not()
+// 	//     .isEmpty()
+// 	//     .withMessage("expiresAt is required")
+// 	//     .trim()
+// 	//     .escape(),
+// 	// ],
+// 	// validation,
+// 	authMiddleware,
+// 	admin.addPromoCode
+// );
 
-/**
- * @swagger
- * /getPromoCodes:
- *   get:
- *     summary: Get a list of promo codes
- *     tags: [Admin]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *         required: true
- *         description: Page number for pagination
- *     responses:
- *       200:
- *         description: Promo codes retrieved successfully
- *       404:
- *         description: No promo codes found
- *       500:
- *         description: Internal server error
- */
-router.get(
-	"/getPromoCodes",
-	[
-		check("page")
-			.not()
-			.isEmpty()
-			.withMessage("page is required")
-			.trim()
-			.escape(),
-	],
-	validation,
-	authMiddleware,
-	admin.getPromoCodes
-);
+// /**
+//  * @swagger
+//  * /getPromoCodes:
+//  *   get:
+//  *     summary: Get a list of promo codes
+//  *     tags: [Admin]
+//  *     parameters:
+//  *       - in: query
+//  *         name: page
+//  *         schema:
+//  *           type: integer
+//  *         required: true
+//  *         description: Page number for pagination
+//  *     responses:
+//  *       200:
+//  *         description: Promo codes retrieved successfully
+//  *       404:
+//  *         description: No promo codes found
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.get(
+// 	"/getPromoCodes",
+// 	[
+// 		check("page")
+// 			.not()
+// 			.isEmpty()
+// 			.withMessage("page is required")
+// 			.trim()
+// 			.escape(),
+// 	],
+// 	validation,
+// 	authMiddleware,
+// 	admin.getPromoCodes
+// );
 
-/**
- * @swagger
- * /deletePromoCode:
- *   delete:
- *     summary: Delete a promo code
- *     tags: [Admin]
- *     parameters:
- *       - in: query
- *         name: promoCode_id
- *         schema:
- *           type: string
- *         required: true
- *         description: ID of the promo code to delete
- *     responses:
- *       200:
- *         description: Promo code deleted successfully
- *       404:
- *         description: Promo code not found
- *       500:
- *         description: Internal server error
- */
-router.delete(
-	"/deletePromoCode",
-	[
-		check("promoCode_id")
-			.not()
-			.isEmpty()
-			.withMessage("promoCode_id is required")
-			.trim()
-			.escape(),
-	],
-	validation,
-	authMiddleware,
-	admin.deletePromoCode
-);
+// /**
+//  * @swagger
+//  * /deletePromoCode:
+//  *   delete:
+//  *     summary: Delete a promo code
+//  *     tags: [Admin]
+//  *     parameters:
+//  *       - in: query
+//  *         name: promoCode_id
+//  *         schema:
+//  *           type: string
+//  *         required: true
+//  *         description: ID of the promo code to delete
+//  *     responses:
+//  *       200:
+//  *         description: Promo code deleted successfully
+//  *       404:
+//  *         description: Promo code not found
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.delete(
+// 	"/deletePromoCode",
+// 	[
+// 		check("promoCode_id")
+// 			.not()
+// 			.isEmpty()
+// 			.withMessage("promoCode_id is required")
+// 			.trim()
+// 			.escape(),
+// 	],
+// 	validation,
+// 	authMiddleware,
+// 	admin.deletePromoCode
+// );
 
 // ------------------------------------------------Notification Routes------------------------------------------------//
-/**
- * @swagger
- * /notificationList:
- *   get:
- *     summary: Get a list of notifications
- *     tags: [Admin]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *         required: true
- *         description: Page number for pagination
- *     responses:
- *       200:
- *         description: Notifications retrieved successfully
- *       404:
- *         description: No notifications found
- *       500:
- *         description: Internal server error
- */
-router.get(
-	"/notificationList",
-	[
-		check("page")
-			.notEmpty()
-			.withMessage("page is required")
-			.isInt({ min: 1 })
-			.withMessage("page input not valid"),
-	],
-	validation,
-	authMiddleware,
-	admin.notificationList
-);
+//TODO: Notification routes are commented as per the current requirement
+
+// /**
+//  * @swagger
+//  * /notificationList:
+//  *   get:
+//  *     summary: Get a list of notifications
+//  *     tags: [Admin]
+//  *     parameters:
+//  *       - in: query
+//  *         name: page
+//  *         schema:
+//  *           type: integer
+//  *         required: true
+//  *         description: Page number for pagination
+//  *     responses:
+//  *       200:
+//  *         description: Notifications retrieved successfully
+//  *       404:
+//  *         description: No notifications found
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.get(
+// 	"/notificationList",
+// 	[
+// 		check("page")
+// 			.notEmpty()
+// 			.withMessage("page is required")
+// 			.isInt({ min: 1 })
+// 			.withMessage("page input not valid"),
+// 	],
+// 	validation,
+// 	authMiddleware,
+// 	admin.notificationList
+// );
 
 console.log("im out of admin.js router");
 module.exports = router;

@@ -23,9 +23,11 @@ const options = {
 		"./index.js",
 		"./routers/super.admin.js",
 		"./routers/admin.js",
-		"./routers/barista.js",
-		"./routers/user.js",
+		// "./routers/barista.js",
+		// "./routers/user.js",
 		"./routers/waiter.js",
+		"./routers/order.js",
+		"./routers/customer.js",
 	],
 };
 

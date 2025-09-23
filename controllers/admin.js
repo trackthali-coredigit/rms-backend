@@ -2230,275 +2230,7 @@ const orderDetails = async (req, res) => {
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });
 	}
 };
-const filter = async (req, res) => {
-	try {
-		const user_id = req.userData.user_id;
-		const user = await db.User.findByPk(user_id);
-		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
-		}
-		const { field, page } = req.query;
-		// previous_day, this_week, this_month, last_month, this_year, last_year ,custom,today
-		let condition = {};
-		switch (field) {
-			case "today":
-				console.log("I'm in today");
-				condition = {
-					[Op.and]: [
-						{
-							createdAt: {
-								[Op.gte]: new Date(new Date().setHours(0, 0, 0, 0)),
-								[Op.lt]: new Date(new Date().setHours(23, 59, 59, 999)),
-							},
-						},
-						{ business_id: user.business_id },
-						{ order_status: "complete" },
-					],
-				};
-				break;
-			case "previous_day":
-				console.log("i'm in yesterday");
-				const yesterday = new Date();
-				console.log(">>>>>>>>> new Date();", new Date());
-				console.log(">>>>>>>>> yesterday", yesterday);
-				yesterday.setDate(yesterday.getDate() - 1); // Subtract 1 day from current date
-				condition = {
-					[Op.and]: [
-						{
-							createdAt: {
-								[Op.gte]: new Date(yesterday.setHours(0, 0, 0, 0)),
-								[Op.lt]: new Date(yesterday.setHours(23, 59, 59, 999)),
-							},
-						},
-						{ business_id: user.business_id },
-						{ order_status: "complete" },
-					],
-				};
-				break;
-			case "this_month":
-				console.log("i'm in this_month");
 
-				const startOfMonth = new Date(
-					new Date().getFullYear(),
-					new Date().getMonth(),
-					1
-				);
-				const endOfMonth = new Date(
-					new Date().getFullYear(),
-					new Date().getMonth() + 1,
-					0,
-					23,
-					59,
-					59,
-					999
-				);
-				condition = {
-					[Op.and]: [
-						{
-							createdAt: {
-								[Op.gte]: startOfMonth,
-								[Op.lt]: endOfMonth,
-							},
-						},
-						{ business_id: user.business_id },
-						{ order_status: "complete" },
-					],
-				};
-				break;
-			case "last_month":
-				console.log("i'm in last_month");
-
-				const startOfLastMonth = new Date(
-					new Date().getFullYear(),
-					new Date().getMonth() - 1,
-					1
-				);
-				const endOfLastMonth = new Date(
-					new Date().getFullYear(),
-					new Date().getMonth(),
-					0,
-					23,
-					59,
-					59,
-					999
-				);
-				condition = {
-					[Op.and]: [
-						{
-							createdAt: {
-								[Op.gte]: startOfLastMonth,
-								[Op.lt]: endOfLastMonth,
-							},
-						},
-						{ business_id: user.business_id },
-						{ order_status: "complete" },
-					],
-				};
-				break;
-			case "this_year":
-				console.log("i'm in this_year");
-
-				const startOfYear = new Date(new Date().getFullYear(), 0, 1);
-				const endOfYear = new Date(
-					new Date().getFullYear(),
-					11,
-					31,
-					23,
-					59,
-					59,
-					999
-				);
-				condition = {
-					[Op.and]: [
-						{
-							createdAt: {
-								[Op.gte]: startOfYear,
-								[Op.lt]: endOfYear,
-							},
-						},
-						{ business_id: user.business_id },
-						{ order_status: "complete" },
-					],
-				};
-				break;
-			case "last_year":
-				console.log("i'm in last_year");
-
-				const startOfLastYear = new Date(new Date().getFullYear() - 1, 0, 1);
-				const endOfLastYear = new Date(
-					new Date().getFullYear() - 1,
-					11,
-					31,
-					23,
-					59,
-					59,
-					999
-				);
-				condition = {
-					[Op.and]: [
-						{
-							createdAt: {
-								[Op.gte]: startOfLastYear,
-								[Op.lt]: endOfLastYear,
-							},
-						},
-						{ business_id: user.business_id },
-						{ order_status: "complete" },
-					],
-				};
-				break;
-			case "custom":
-				console.log("i'm in custom");
-
-				const { start_date, end_date } = req.query;
-				condition = {
-					[Op.and]: [
-						{
-							createdAt: {
-								[Op.gte]: new Date(start_date),
-								[Op.lt]: new Date(end_date),
-							},
-						},
-						{ business_id: user.business_id },
-						{ order_status: "complete" },
-					],
-				};
-				break;
-			case "select_date":
-				const { select_date } = req.query;
-				if (user.role == "user") {
-					condition = {
-						[Op.and]: [
-							{
-								createdAt: {
-									[Op.gte]: new Date(select_date),
-									[Op.lt]: new Date(
-										new Date(select_date).setHours(23, 59, 59, 999)
-									),
-								},
-							},
-							{ user_id: user.user_id },
-							{ order_status: "complete" },
-						],
-					};
-				}
-				if (user.role == "waiter") {
-					condition = {
-						[Op.and]: [
-							{
-								createdAt: {
-									[Op.gte]: new Date(select_date),
-									[Op.lt]: new Date(
-										new Date(select_date).setHours(23, 59, 59, 999)
-									),
-								},
-							},
-							{ waiter_id: user.user_id },
-							{ business_id: user.business_id },
-							{ order_status: "complete" },
-						],
-					};
-				}
-				break;
-			default:
-				return res
-					.status(400)
-					.json({ status: 0, message: "Invalid field value" });
-		}
-		let total_amount = null;
-		if (req.userData.role == "admin" || req.userData.role == "supervisor") {
-			const orderTotalAmount = await db.Order.findAll({
-				where: condition,
-				attributes: [
-					[
-						db.sequelize.fn("SUM", db.sequelize.col("total_price")),
-						"total_amount",
-					],
-				],
-				raw: true,
-			});
-			total_amount = orderTotalAmount[0].total_amount;
-		}
-		const pageSize = 20;
-		let currentPage = parseInt(page, 10) || 1;
-		if (currentPage < 1) currentPage = 1;
-		const offset = (currentPage - 1) * pageSize;
-		// const filteredData = await db.Order.findAll({
-		const { count, rows } = await db.Order.findAndCountAll({
-			where: condition,
-			include: [
-				{
-					model: db.Business,
-					required: false,
-				},
-				{
-					model: db.Order_Item,
-					required: false,
-				},
-				{
-					model: db.User,
-					attributes: ["user_id", "username", "first_name", "last_name"],
-					required: false,
-				},
-			],
-			distinct: true,
-			limit: pageSize,
-			offset,
-			order: [["createdAt", "DESC"]],
-		});
-		const totalPages = Math.ceil(count / pageSize);
-		res.json({
-			Status: 1,
-			totalPages,
-			currentPage,
-			message: "Filtered data retrieved successfully",
-			data: { total_amount, total_order: count, filteredData: rows },
-		});
-	} catch (error) {
-		console.error("Error:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
-	}
-};
 const notificationList = async (req, res) => {
 	try {
 		const user_id = req.userData.user_id;
@@ -2668,6 +2400,272 @@ const contactUs = async (req, res) => {
 		});
 	} catch (error) {
 		console.error("Error storing contact details:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
+};
+
+const filter = async (req, res) => {
+	try {
+		const current_user_id = req.userData.user_id;
+		const business_id = req.userData.business_id;
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id: current_user_id },
+					{ [Op.or]: [{ role: "admin" }, { role: "supervisor" }] },
+				],
+			},
+		});
+		if (!user) {
+			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
+
+		// Get filter params
+		const {
+			page,
+			order_status,
+			order_type,
+			bill_status,
+			sort_by,
+			sort_order,
+			field,
+			start_date,
+			end_date,
+			select_date,
+		} = req.query;
+		const pageSize = 20;
+		let currentPage = parseInt(page, 10) || 1;
+		if (currentPage < 1) currentPage = 1;
+		const offset = (currentPage - 1) * pageSize;
+
+		// Build filter
+		let where = { business_id };
+		// Date filter logic (same as previous filter)
+		if (field) {
+			switch (field) {
+				case "today":
+					where.createdAt = {
+						[Op.gte]: new Date(new Date().setHours(0, 0, 0, 0)),
+						[Op.lt]: new Date(new Date().setHours(23, 59, 59, 999)),
+					};
+					break;
+				case "previous_day":
+					const yesterday = new Date();
+					yesterday.setDate(yesterday.getDate() - 1);
+					where.createdAt = {
+						[Op.gte]: new Date(yesterday.setHours(0, 0, 0, 0)),
+						[Op.lt]: new Date(yesterday.setHours(23, 59, 59, 999)),
+					};
+					break;
+				case "this_month":
+					where.createdAt = {
+						[Op.gte]: new Date(
+							new Date().getFullYear(),
+							new Date().getMonth(),
+							1
+						),
+						[Op.lt]: new Date(
+							new Date().getFullYear(),
+							new Date().getMonth() + 1,
+							0,
+							23,
+							59,
+							59,
+							999
+						),
+					};
+					break;
+				case "last_month":
+					where.createdAt = {
+						[Op.gte]: new Date(
+							new Date().getFullYear(),
+							new Date().getMonth() - 1,
+							1
+						),
+						[Op.lt]: new Date(
+							new Date().getFullYear(),
+							new Date().getMonth(),
+							0,
+							23,
+							59,
+							59,
+							999
+						),
+					};
+					break;
+				case "this_year":
+					where.createdAt = {
+						[Op.gte]: new Date(new Date().getFullYear(), 0, 1),
+						[Op.lt]: new Date(
+							new Date().getFullYear(),
+							11,
+							31,
+							23,
+							59,
+							59,
+							999
+						),
+					};
+					break;
+				case "last_year":
+					where.createdAt = {
+						[Op.gte]: new Date(new Date().getFullYear() - 1, 0, 1),
+						[Op.lt]: new Date(
+							new Date().getFullYear() - 1,
+							11,
+							31,
+							23,
+							59,
+							59,
+							999
+						),
+					};
+					break;
+				case "custom":
+					if (start_date && end_date) {
+						where.createdAt = {
+							[Op.gte]: new Date(start_date),
+							[Op.lt]: new Date(end_date),
+						};
+					}
+					break;
+				case "select_date":
+					if (select_date) {
+						where.createdAt = {
+							[Op.gte]: new Date(select_date),
+							[Op.lt]: new Date(
+								new Date(select_date).setHours(23, 59, 59, 999)
+							),
+						};
+					}
+					break;
+				default:
+					return res
+						.status(400)
+						.json({ Status: 0, message: "Invalid field value" });
+			}
+		}
+
+		// Other filters
+		if (order_status && order_status !== "all") {
+			where.order_status = order_status;
+		} else {
+			where.order_status = "complete";
+		}
+		if (order_type && order_type !== "all") {
+			where.order_type = order_type;
+		}
+		if (bill_status && bill_status !== "all") {
+			where.bill_status = bill_status;
+		}
+
+		// Sorting
+		let orderArr = [["updatedAt", "DESC"]];
+		if (sort_by) {
+			const validSortOrder =
+				sort_order && ["ASC", "DESC"].includes(sort_order.toUpperCase())
+					? sort_order.toUpperCase()
+					: "DESC";
+			orderArr = [[sort_by, validSortOrder]];
+		}
+
+		// Query orders
+		const { count, rows } = await db.Order.findAndCountAll({
+			where,
+			include: [
+				{
+					model: db.Order_Item,
+					as: "order_items_models",
+					required: false,
+					include: [
+						{
+							model: db.User,
+							attributes: ["user_id", "first_name", "last_name", "role"],
+							required: false,
+						},
+					],
+				},
+				{
+					model: db.User,
+					attributes: ["user_id", "role", "first_name", "last_name"],
+					required: false,
+				},
+				{
+					model: db.Waiter,
+					attributes: ["id", "user_id"],
+					required: false,
+					include: [
+						{
+							model: db.User,
+							as: "users_model",
+							attributes: ["user_id", "first_name", "last_name", "role"],
+							required: false,
+						},
+					],
+				},
+				{
+					model: db.Business,
+					attributes: ["business_id", "business_name", "tax"],
+					required: false,
+				},
+			],
+			distinct: true,
+			limit: pageSize,
+			offset,
+			order: orderArr,
+		});
+
+		// Fetch ingrediant data for each order item
+		for (const order of rows) {
+			if (order.order_items_models && Array.isArray(order.order_items_models)) {
+				for (const item of order.order_items_models) {
+					if (item.ingrediant_id) {
+						const ingrediantIds = item.ingrediant_id
+							.split(",")
+							.map((id) => id.trim())
+							.filter((id) => id);
+						if (ingrediantIds.length > 0) {
+							item.dataValues.ingrediant_models = await db.Ingrediant.findAll({
+								where: { ingrediant_id: ingrediantIds },
+								attributes: ["ingrediant_id", "name", "price"],
+							});
+						} else {
+							item.dataValues.ingrediant_models = [];
+						}
+					} else {
+						item.dataValues.ingrediant_models = [];
+					}
+				}
+			}
+		}
+
+		// Calculate total_amount
+		let total_amount = null;
+		const totalAmountResult = await db.Order.findAll({
+			where,
+			attributes: [
+				[
+					db.sequelize.fn("SUM", db.sequelize.col("total_price")),
+					"total_amount",
+				],
+			],
+			raw: true,
+		});
+		total_amount = totalAmountResult[0].total_amount;
+
+		const totalPages = Math.ceil(count / pageSize);
+
+		return res.status(200).json({
+			Status: 1,
+			message: "Order list fetched successfully",
+			current_page: currentPage,
+			total_pages: totalPages,
+			orders: rows,
+			total_orders: count,
+			total_amount,
+		});
+	} catch (error) {
+		console.error("Error in filter:", error);
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });
 	}
 };
