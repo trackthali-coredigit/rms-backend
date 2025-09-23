@@ -15,6 +15,27 @@ let validation = (req, res, next) => {
 	next();
 };
 
+/**
+ * @swagger
+ * /search/customers/by-number/{phone_number}:
+ *   get:
+ *     summary: Search customers by phone number
+ *     tags: [Customer]
+ *     parameters:
+ *       - in: path
+ *         name: phone_number
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Customer's phone number
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Customers found
+ *       400:
+ *         description: Validation error
+ */
 router.get(
 	"/search/customers/by-number/:phone_number",
 	authMiddleware,
@@ -30,6 +51,39 @@ router.get(
 	customer_routes.searchCustomers
 );
 
+/**
+ * @swagger
+ * /add/customer:
+ *   post:
+ *     summary: Add a new customer
+ *     tags: [Customer]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *               last_name:
+ *                 type: string
+ *               country_code:
+ *                 type: string
+ *               iso_code:
+ *                 type: string
+ *               phone_no:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Customer added successfully
+ *       400:
+ *         description: Validation error
+ */
 router.post(
 	"/add/customer",
 	[
