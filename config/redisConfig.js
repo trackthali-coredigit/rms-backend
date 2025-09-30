@@ -1,45 +1,63 @@
 const Redis = require("ioredis");
 require("dotenv").config();
 
-// Redis configuration with better error handling
-const redisConfig = {
-	host: process.env.REDIS_HOST || "127.0.0.1",
-	port: process.env.REDIS_PORT || 6379,
-	db: process.env.REDISDB || 0,
-	maxRetriesPerRequest: 3, // Reduced to prevent MaxRetriesPerRequestError
-	connectTimeout: 10000, // 10 seconds
-	lazyConnect: true, // Don't connect immediately, wait for first command
-	retryStrategy: (times) => {
-		// Exponential backoff with max delay
-		const delay = Math.min(times * 1000, 30000); // Max 30 seconds
-		console.log(`Redis retry attempt ${times}, waiting ${delay}ms`);
-		return times > 5 ? null : delay; // Stop retrying after 5 attempts
-	},
-	reconnectOnError: (err) => {
-		// Reconnect on specific errors
-		const targetErrors = [
-			"READONLY",
-			"ECONNRESET",
-			"ENOTFOUND",
-			"ENETUNREACH",
-			"ETIMEDOUT",
-		];
-		return targetErrors.some((targetError) =>
-			err.message.includes(targetError)
-		);
-	},
-};
+// Create Redis client with proper URL or fallback configuration
+let redisClient;
 
-// Add Railway-specific Redis URL if available
 if (process.env.REDIS_URL) {
-	redisConfig.host = undefined;
-	redisConfig.port = undefined;
-	redisConfig.db = undefined;
-	// Railway provides REDIS_URL environment variable for connection
-	console.log("Using Redis URL from Railway environment");
+	// Use Redis URL (for Railway or other cloud providers)
+	console.log("Using Redis URL from environment variable");
+	redisClient = new Redis(process.env.REDIS_URL, {
+		maxRetriesPerRequest: 3,
+		connectTimeout: 10000,
+		lazyConnect: true,
+		retryStrategy: (times) => {
+			const delay = Math.min(times * 1000, 30000);
+			console.log(`Redis retry attempt ${times}, waiting ${delay}ms`);
+			return times > 5 ? null : delay;
+		},
+		reconnectOnError: (err) => {
+			const targetErrors = [
+				"READONLY",
+				"ECONNRESET",
+				"ENOTFOUND",
+				"ENETUNREACH",
+				"ETIMEDOUT",
+			];
+			return targetErrors.some((targetError) =>
+				err.message.includes(targetError)
+			);
+		},
+	});
+} else {
+	// Fallback to individual Redis configuration
+	console.log("Using individual Redis configuration (host/port)");
+	redisClient = new Redis({
+		host: process.env.REDIS_HOST || "127.0.0.1",
+		port: process.env.REDIS_PORT || 6379,
+		db: process.env.REDISDB || 0,
+		maxRetriesPerRequest: 3,
+		connectTimeout: 10000,
+		lazyConnect: true,
+		retryStrategy: (times) => {
+			const delay = Math.min(times * 1000, 30000);
+			console.log(`Redis retry attempt ${times}, waiting ${delay}ms`);
+			return times > 5 ? null : delay;
+		},
+		reconnectOnError: (err) => {
+			const targetErrors = [
+				"READONLY",
+				"ECONNRESET",
+				"ENOTFOUND",
+				"ENETUNREACH",
+				"ETIMEDOUT",
+			];
+			return targetErrors.some((targetError) =>
+				err.message.includes(targetError)
+			);
+		},
+	});
 }
-
-const redisClient = new Redis(process.env.REDIS_URL || redisConfig);
 
 // Connection event handlers
 redisClient.on("error", (err) => {
