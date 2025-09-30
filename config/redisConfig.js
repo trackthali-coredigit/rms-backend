@@ -9,7 +9,15 @@ if (process.env.REDIS_URL) {
 	console.log("Using Redis URL from environment variable");
 	console.log("Redis URL host:", new URL(process.env.REDIS_URL).hostname);
 
-	redisClient = new Redis(process.env.REDIS_URL, {
+	// For Railway compatibility, append family=0 parameter if not already present
+	let redisUrl = process.env.REDIS_URL;
+	if (redisUrl.includes("railway.internal") && !redisUrl.includes("family=")) {
+		const separator = redisUrl.includes("?") ? "&" : "?";
+		redisUrl = `${redisUrl}${separator}family=0`;
+		console.log("Added family=0 parameter for Railway compatibility");
+	}
+
+	redisClient = new Redis(redisUrl, {
 		connectTimeout: 90000, // Extended timeout for Railway (90s)
 		commandTimeout: 20000, // Extended command timeout
 		lazyConnect: true,
@@ -45,8 +53,8 @@ if (process.env.REDIS_URL) {
 				err.message.includes(targetError)
 			);
 		},
-		// Railway specific configuration
-		family: 4, // Force IPv4
+		// Railway specific configuration - CRITICAL FIX for ENOTFOUND errors
+		family: 0, // Enable dual-stack (IPv4 + IPv6) lookups - fixes Railway IPv6 issues
 		keepAlive: true,
 		// Additional Railway optimizations
 		autoResubscribe: true,
@@ -130,8 +138,25 @@ redisClient.on("end", () => {
 	console.log("Redis connection ended");
 });
 
+// Function to initialize Redis connection (to be called from main app)
+const initializeRedis = async () => {
+	// For Railway, wait longer before attempting connection
+	const isRailway =
+		process.env.RAILWAY_ENVIRONMENT ||
+		process.env.REDIS_URL?.includes("railway");
+	const initialDelay = isRailway ? 20000 : 5000; // 20s for Railway, 5s for others
+
+	console.log("Initializing Redis connection...");
+	console.log(`Waiting ${initialDelay}ms before Redis initialization...`);
+	await new Promise((resolve) => setTimeout(resolve, initialDelay));
+
+	// More retries for Railway with longer delays
+	const retries = isRailway ? 20 : 8;
+	return testRedisConnection(retries);
+};
+
 // Test connection on startup with retries
-const testRedisConnection = async (retries = 10) => {
+const testRedisConnection = async (retries = 15) => {
 	console.log("Starting Redis connection test...");
 
 	for (let i = 0; i < retries; i++) {
@@ -151,7 +176,12 @@ const testRedisConnection = async (retries = 10) => {
 			);
 
 			if (i < retries - 1) {
-				const delay = Math.min((i + 1) * 5000, 30000); // Progressive delay: 5s, 10s, 15s, up to 30s
+				// Progressive delay with longer intervals for Railway
+				const isRailway =
+					process.env.RAILWAY_ENVIRONMENT ||
+					process.env.REDIS_URL?.includes("railway");
+				const baseDelay = isRailway ? 8000 : 5000; // 8s for Railway, 5s for others
+				const delay = Math.min((i + 1) * baseDelay, isRailway ? 60000 : 30000);
 				console.log(`⏳ Waiting ${delay}ms before retry...`);
 				await new Promise((resolve) => setTimeout(resolve, delay));
 			}
@@ -162,22 +192,6 @@ const testRedisConnection = async (retries = 10) => {
 		"❌ All Redis connection tests failed. Application will continue without Redis caching"
 	);
 	return false;
-};
-
-// Function to initialize Redis connection (to be called from main app)
-const initializeRedis = async () => {
-	// For Railway, wait longer before attempting connection
-	const isRailway =
-		process.env.RAILWAY_ENVIRONMENT ||
-		process.env.REDIS_URL?.includes("railway");
-	const initialDelay = isRailway ? 15000 : 5000; // 15s for Railway, 5s for others
-
-	console.log(`Waiting ${initialDelay}ms before Redis initialization...`);
-	await new Promise((resolve) => setTimeout(resolve, initialDelay));
-
-	// More retries for Railway
-	const retries = isRailway ? 15 : 8;
-	return testRedisConnection(retries);
 };
 
 // Don't auto-initialize on module load - let the main app control when to connect
