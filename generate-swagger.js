@@ -39,6 +39,20 @@ const options = {
 				"API documentation for the MABO Restaurant Management System",
 		},
 		servers: getServerUrls(),
+		components: {
+			securitySchemes: {
+				bearerAuth: {
+					type: "http",
+					scheme: "bearer",
+					bearerFormat: "JWT",
+				},
+			},
+		},
+		security: [
+			{
+				bearerAuth: [],
+			},
+		],
 	},
 	apis: [
 		"./index.js",

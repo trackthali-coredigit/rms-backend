@@ -22,6 +22,7 @@ let validation = (req, res, next) => {
  *   post:
  *     summary: Super admin sign in
  *     tags: [SuperAdmin]
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
