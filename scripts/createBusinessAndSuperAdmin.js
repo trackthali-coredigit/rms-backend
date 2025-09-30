@@ -91,7 +91,7 @@ async function createBusinessAndSuperAdmin() {
 	try {
 		await sequelize.authenticate();
 		console.log("DB connection established.");
-		// await db.sequelize.sync({ alter: true }); // Uncomment if you want to auto-create tables
+		await db.sequelize.sync({ alter: true }); // Uncomment if you want to auto-create tables
 
 		// Create business if not exists
 		const [business, businessCreated] = await Business.findOrCreate({
