@@ -73,7 +73,7 @@ const start = async () => {
 		console.log(
 			"..........................................................................."
 		);
-		await db.sequelize.sync({ alter: true });
+		// await db.sequelize.sync({ alter: true });
 	} catch (error) {
 		console.error("Unable to connect to the database:", error);
 	}
