@@ -1,5 +1,9 @@
 // Swagger configuration for the API
 const swaggerJSDoc = require("swagger-jsdoc");
+const {
+	getServerUrl,
+	isRailwayEnvironment,
+} = require("./config/railwayConfig");
 
 const options = {
 	definition: {
@@ -12,8 +16,10 @@ const options = {
 		},
 		servers: [
 			{
-				url: "http://127.0.0.1:9000",
-				description: "Local server",
+				url: getServerUrl(),
+				description: isRailwayEnvironment()
+					? "Railway Production"
+					: "Local Development",
 			},
 		],
 		components: {

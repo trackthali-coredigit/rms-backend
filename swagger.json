@@ -14,6 +14,7 @@
   "paths": {
     "/superAdminSignIn": {
       "post": {
+        "security": [],
         "summary": "Super admin sign in",
         "tags": [
           "SuperAdmin"
@@ -2760,6 +2761,18 @@
       }
     }
   },
-  "components": {},
-  "tags": []
+  "components": {
+  "securitySchemes": {
+    "bearerAuth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT"
+    }
+  }
+},
+"security": [
+  {
+    "bearerAuth": []
+  }
+]
 }

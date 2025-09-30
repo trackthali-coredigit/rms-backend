@@ -59,7 +59,7 @@ app.use("/api-docs", swaggerUi.serve, async (_req, res, next) => {
 			// Dynamically require and execute swagger generation
 			require("./generate-swagger.js");
 		}
-		
+
 		const swaggerDocument = require(swaggerPath);
 		return swaggerUi.setup(swaggerDocument)(_req, res, next);
 	} catch (error) {
@@ -71,7 +71,7 @@ app.use("/api-docs", swaggerUi.serve, async (_req, res, next) => {
 const start = async () => {
 	// Log environment information
 	logEnvironmentInfo();
-	
+
 	httpServer.listen(PORT, () => {
 		console.log(`Server is running on port ${PORT}`);
 	});
@@ -79,12 +79,12 @@ const start = async () => {
 	try {
 		await db.sequelize.authenticate();
 		console.log("Connection has been established successfully.");
-		// await db.sequelize.sync({ force: true });
-		alter: true;
+		// Enable alter mode to add missing columns safely
+		await db.sequelize.sync({ alter: true });
+		console.log("Database schema synchronized successfully.");
 		console.log(
 			"..........................................................................."
 		);
-		// await db.sequelize.sync({ alter: true });
 	} catch (error) {
 		console.error("Unable to connect to the database:", error);
 	}
