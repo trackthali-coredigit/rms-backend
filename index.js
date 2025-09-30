@@ -26,6 +26,7 @@ const customer_router = require("./routers/customer");
 const { socketConfig } = require("./config/socketConfig");
 const { setIO } = require("./config/socketSetup");
 const { initializeRedis } = require("./config/redisConfig");
+const { logEnvironmentInfo } = require("./config/railwayConfig");
 
 app.get("/", (req, res) => {
 	res.send("Server is running...");
@@ -51,8 +52,15 @@ app.use("/", customer_router);
 
 app.use("/api-docs", swaggerUi.serve, async (_req, res, next) => {
 	try {
-		// const swaggerDocument = require('./swagger.json');
-		const swaggerDocument = require(path.join(__dirname, "swagger.json"));
+		// Check if swagger.json exists, if not generate it
+		const swaggerPath = path.join(__dirname, "swagger.json");
+		if (!fs.existsSync(swaggerPath)) {
+			console.log("Swagger.json not found, generating...");
+			// Dynamically require and execute swagger generation
+			require("./generate-swagger.js");
+		}
+		
+		const swaggerDocument = require(swaggerPath);
 		return swaggerUi.setup(swaggerDocument)(_req, res, next);
 	} catch (error) {
 		console.error("Failed to load swagger document:", error);
@@ -61,6 +69,9 @@ app.use("/api-docs", swaggerUi.serve, async (_req, res, next) => {
 });
 
 const start = async () => {
+	// Log environment information
+	logEnvironmentInfo();
+	
 	httpServer.listen(PORT, () => {
 		console.log(`Server is running on port ${PORT}`);
 	});

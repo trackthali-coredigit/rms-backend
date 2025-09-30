@@ -2,6 +2,41 @@
 const swaggerJSDoc = require("swagger-jsdoc");
 const fs = require("fs");
 
+// Determine the environment and set appropriate server URLs
+const getServerUrls = () => {
+	const servers = [];
+
+	// Always include local development server
+	servers.push({
+		url: "http://127.0.0.1:9000",
+		description: "Local Development Server",
+	});
+
+	// Add Railway production server if RAILWAY_ENVIRONMENT is set
+	if (process.env.RAILWAY_ENVIRONMENT) {
+		const railwayUrl = process.env.RAILWAY_STATIC_URL
+			? `https://${process.env.RAILWAY_STATIC_URL}`
+			: `https://${
+					process.env.RAILWAY_SERVICE_NAME || "your-app"
+			  }.up.railway.app`;
+
+		servers.push({
+			url: railwayUrl,
+			description: "Railway Production Server",
+		});
+	}
+
+	// Add custom production URL if provided
+	if (process.env.PRODUCTION_URL) {
+		servers.push({
+			url: process.env.PRODUCTION_URL,
+			description: "Production Server",
+		});
+	}
+
+	return servers;
+};
+
 const options = {
 	definition: {
 		openapi: "3.0.0",
@@ -11,13 +46,7 @@ const options = {
 			description:
 				"API documentation for the MABO Restaurant Management System",
 		},
-		servers: [
-			{
-				// Add Env Swagger End Point
-				url: "http://127.0.0.1:9000",
-				description: "Local server",
-			},
-		],
+		servers: getServerUrls(),
 	},
 	apis: [
 		"./index.js",
@@ -33,4 +62,9 @@ const options = {
 
 const swaggerSpec = swaggerJSDoc(options);
 fs.writeFileSync("./swagger.json", JSON.stringify(swaggerSpec, null, 2));
+
 console.log("swagger.json generated!");
+console.log(`Generated ${swaggerSpec.servers.length} server(s):`);
+swaggerSpec.servers.forEach((server, index) => {
+	console.log(`  ${index + 1}. ${server.description}: ${server.url}`);
+});

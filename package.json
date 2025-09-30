@@ -26,10 +26,14 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
+    "dev": "nodemon index.js",
+    "build": "node generate-swagger.js",
+    "railway:start": "node generate-swagger.js && node index.js",
     "script": "node ./scripts/createBusinessAndSuperAdmin.js",
     "test": "",
     "swagger": "node swagger.js && nodemon index.js",
     "swagger:gen": "node generate-swagger.js",
+    "swagger:dev": "node generate-swagger.js && nodemon index.js",
     "redis:health": "node scripts/checkRedisHealth.js"
   },
   "author": "",

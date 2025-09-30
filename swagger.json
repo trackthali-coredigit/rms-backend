@@ -8,7 +8,7 @@
   "servers": [
     {
       "url": "http://127.0.0.1:9000",
-      "description": "Local server"
+      "description": "Local Development Server"
     }
   ],
   "paths": {
@@ -18,7 +18,6 @@
         "tags": [
           "SuperAdmin"
         ],
-        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -114,8 +113,9 @@
                   },
                   "tax": {
                     "type": "number",
-                    "description": "Tax percentage (0-100)"
-                  }
+                    "format": "float"
+                  },
+                  "description": "Tax percentage (0-100)"
                 }
               }
             }
@@ -192,8 +192,9 @@
                   },
                   "tax": {
                     "type": "number",
-                    "description": "Tax percentage (0-100)"
-                  }
+                    "format": "float"
+                  },
+                  "description": "Tax percentage (0-100)"
                 }
               }
             }
@@ -2759,18 +2760,6 @@
       }
     }
   },
- "components": {
-  "securitySchemes": {
-    "bearerAuth": {
-      "type": "http",
-      "scheme": "bearer",
-      "bearerFormat": "JWT"
-    }
-  }
-},
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+  "components": {},
+  "tags": []
 }
