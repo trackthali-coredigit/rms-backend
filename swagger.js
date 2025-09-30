@@ -16,10 +16,12 @@ const options = {
 		},
 		servers: [
 			{
-				url: getServerUrl(),
-				description: isRailwayEnvironment()
-					? "Railway Production"
-					: "Local Development",
+				url: "http://127.0.0.1:9000",
+				description: "Local Development Server",
+			},
+			{
+				url: "https://rms-backend-production-a81b.up.railway.app",
+				description: "Railway Production (Fallback)",
 			},
 		],
 		components: {

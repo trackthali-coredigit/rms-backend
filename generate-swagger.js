@@ -6,31 +6,23 @@ const fs = require("fs");
 const getServerUrls = () => {
 	const servers = [];
 
-	// Always include local development server
+	// Add Railway production server first (primary)
+	servers.push({
+		url: "https://rms-backend-production-a81b.up.railway.app",
+		description: "Railway Production Server",
+	});
+
+	// Always include local development server as fallback
 	servers.push({
 		url: "http://127.0.0.1:9000",
 		description: "Local Development Server",
 	});
 
-	// Add Railway production server if RAILWAY_ENVIRONMENT is set
-	if (process.env.RAILWAY_ENVIRONMENT) {
-		const railwayUrl = process.env.RAILWAY_STATIC_URL
-			? `https://${process.env.RAILWAY_STATIC_URL}`
-			: `https://${
-					process.env.RAILWAY_SERVICE_NAME || "your-app"
-			  }.up.railway.app`;
-
-		servers.push({
-			url: railwayUrl,
-			description: "Railway Production Server",
-		});
-	}
-
 	// Add custom production URL if provided
 	if (process.env.PRODUCTION_URL) {
 		servers.push({
 			url: process.env.PRODUCTION_URL,
-			description: "Production Server",
+			description: "Custom Production Server",
 		});
 	}
 

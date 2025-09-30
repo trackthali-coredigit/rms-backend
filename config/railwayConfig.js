@@ -16,8 +16,8 @@ const getRailwayUrl = () => {
 		return `https://${process.env.RAILWAY_SERVICE_NAME}.up.railway.app`;
 	}
 
-	// Fallback - you'll need to replace 'your-app' with actual service name
-	return `https://your-app.up.railway.app`;
+	// Fallback to actual Railway deployment URL
+	return `https://rms-backend-production-a81b.up.railway.app`;
 };
 
 const getServerUrl = () => {
