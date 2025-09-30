@@ -25,6 +25,7 @@ const order_router = require("./routers/order");
 const customer_router = require("./routers/customer");
 const { socketConfig } = require("./config/socketConfig");
 const { setIO } = require("./config/socketSetup");
+const { initializeRedis } = require("./config/redisConfig");
 
 app.get("/", (req, res) => {
 	res.send("Server is running...");
@@ -76,5 +77,23 @@ const start = async () => {
 	} catch (error) {
 		console.error("Unable to connect to the database:", error);
 	}
+
+	// Initialize Redis after server and database are ready
+	// This runs asynchronously and doesn't block the application startup
+	console.log("Initializing Redis connection...");
+	initializeRedis()
+		.then((success) => {
+			if (success) {
+				console.log("✅ Redis initialized successfully");
+			} else {
+				console.log(
+					"⚠️ Redis initialization failed - app will continue without caching"
+				);
+			}
+		})
+		.catch((error) => {
+			console.warn("❌ Redis initialization error:", error.message);
+			console.log("🔄 App will continue without Redis caching");
+		});
 };
 start();

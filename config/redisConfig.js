@@ -10,19 +10,24 @@ if (process.env.REDIS_URL) {
 	console.log("Redis URL host:", new URL(process.env.REDIS_URL).hostname);
 
 	redisClient = new Redis(process.env.REDIS_URL, {
-		connectTimeout: 60000, // Increased timeout for Railway
-		commandTimeout: 15000,
+		connectTimeout: 90000, // Extended timeout for Railway (90s)
+		commandTimeout: 20000, // Extended command timeout
 		lazyConnect: true,
 		enableReadyCheck: false,
 		maxRetriesPerRequest: null, // Disable retry limit for commands
-		retryDelayOnFailover: 1000,
+		retryDelayOnFailover: 2000, // Longer delay on failover
 		enableOfflineQueue: true, // Enable offline queue to prevent "Stream isn't writeable" errors
-		maxLoadingTimeout: 30000, // Wait longer for Redis to be ready
+		maxLoadingTimeout: 60000, // Wait longer for Redis to be ready (60s)
 		retryStrategy: (times) => {
 			const delay = Math.min(times * 3000, 120000); // Exponential backoff with max 2 minutes
 			console.log(`Redis retry attempt ${times}, waiting ${delay}ms`);
-			// Allow more retries during Railway deployment with longer delays
-			return times > 20 ? null : delay;
+			// More retries for Railway deployment
+			const maxRetries =
+				process.env.RAILWAY_ENVIRONMENT ||
+				process.env.REDIS_URL?.includes("railway")
+					? 30
+					: 20;
+			return times > maxRetries ? null : delay;
 		},
 		reconnectOnError: (err) => {
 			console.log("Reconnect on error triggered:", err.message);
@@ -34,6 +39,7 @@ if (process.env.REDIS_URL) {
 				"ETIMEDOUT",
 				"ECONNREFUSED",
 				"getaddrinfo",
+				"railway.internal", // Railway-specific error
 			];
 			return targetErrors.some((targetError) =>
 				err.message.includes(targetError)
@@ -47,7 +53,12 @@ if (process.env.REDIS_URL) {
 		autoResendUnfulfilledCommands: true,
 		// Add DNS lookup timeout
 		dns: {
-			timeout: 10000,
+			timeout: 15000, // Extended DNS timeout for Railway
+		},
+		// Railway-specific socket options
+		socket: {
+			keepAlive: true,
+			keepAliveInitialDelay: 30000,
 		},
 	});
 } else {
@@ -57,13 +68,13 @@ if (process.env.REDIS_URL) {
 		host: process.env.REDIS_HOST || "127.0.0.1",
 		port: process.env.REDIS_PORT || 6379,
 		db: process.env.REDISDB || 0,
-		maxRetriesPerRequest: 3,
-		connectTimeout: 10000,
+		maxRetriesPerRequest: 5, // Increased retries
+		connectTimeout: 30000, // Increased timeout
 		lazyConnect: true,
 		retryStrategy: (times) => {
 			const delay = Math.min(times * 1000, 30000);
 			console.log(`Redis retry attempt ${times}, waiting ${delay}ms`);
-			return times > 5 ? null : delay;
+			return times > 10 ? null : delay; // More retries
 		},
 		reconnectOnError: (err) => {
 			const targetErrors = [
@@ -72,6 +83,7 @@ if (process.env.REDIS_URL) {
 				"ENOTFOUND",
 				"ENETUNREACH",
 				"ETIMEDOUT",
+				"ECONNREFUSED", // Added this error type
 			];
 			return targetErrors.some((targetError) =>
 				err.message.includes(targetError)
@@ -152,11 +164,23 @@ const testRedisConnection = async (retries = 10) => {
 	return false;
 };
 
-// Test connection after Railway deployment settles
-// Use longer delay for Railway's DNS propagation
-setTimeout(() => {
-	testRedisConnection(12); // More retries with longer delays for Railway
-}, 10000); // Longer initial delay for Railway DNS to propagate
+// Function to initialize Redis connection (to be called from main app)
+const initializeRedis = async () => {
+	// For Railway, wait longer before attempting connection
+	const isRailway =
+		process.env.RAILWAY_ENVIRONMENT ||
+		process.env.REDIS_URL?.includes("railway");
+	const initialDelay = isRailway ? 15000 : 5000; // 15s for Railway, 5s for others
+
+	console.log(`Waiting ${initialDelay}ms before Redis initialization...`);
+	await new Promise((resolve) => setTimeout(resolve, initialDelay));
+
+	// More retries for Railway
+	const retries = isRailway ? 15 : 8;
+	return testRedisConnection(retries);
+};
+
+// Don't auto-initialize on module load - let the main app control when to connect
 
 // Graceful shutdown handler
 process.on("SIGTERM", () => {
@@ -191,9 +215,10 @@ const isRedisHealthy = () => {
 	return redisClient.status === "ready";
 };
 
-// Export both client and helper
+// Export both client and helper functions
 module.exports = {
 	redisClient,
 	safeRedisOperation,
 	isRedisHealthy,
+	initializeRedis, // Export the initialization function
 };
