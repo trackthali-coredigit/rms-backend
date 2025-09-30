@@ -1,4 +1,8 @@
-const { redisClient, safeRedisOperation } = require("../config/redisConfig");
+const {
+	redisClient,
+	safeRedisOperation,
+	isRedisHealthy,
+} = require("../config/redisConfig");
 
 /**
  * Redis utility functions with error handling

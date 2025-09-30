@@ -10,19 +10,19 @@ if (process.env.REDIS_URL) {
 	console.log("Redis URL host:", new URL(process.env.REDIS_URL).hostname);
 
 	redisClient = new Redis(process.env.REDIS_URL, {
-		maxRetriesPerRequest: 10, // Increased retries for Railway deployment
-		connectTimeout: 30000, // Increased timeout for Railway
-		commandTimeout: 10000,
+		connectTimeout: 60000, // Increased timeout for Railway
+		commandTimeout: 15000,
 		lazyConnect: true,
 		enableReadyCheck: false,
 		maxRetriesPerRequest: null, // Disable retry limit for commands
-		retryDelayOnFailover: 100,
-		enableOfflineQueue: false,
+		retryDelayOnFailover: 1000,
+		enableOfflineQueue: true, // Enable offline queue to prevent "Stream isn't writeable" errors
+		maxLoadingTimeout: 30000, // Wait longer for Redis to be ready
 		retryStrategy: (times) => {
-			const delay = Math.min(times * 2000, 60000); // Exponential backoff with max 60s
+			const delay = Math.min(times * 3000, 120000); // Exponential backoff with max 2 minutes
 			console.log(`Redis retry attempt ${times}, waiting ${delay}ms`);
-			// Allow more retries during Railway deployment
-			return times > 15 ? null : delay;
+			// Allow more retries during Railway deployment with longer delays
+			return times > 20 ? null : delay;
 		},
 		reconnectOnError: (err) => {
 			console.log("Reconnect on error triggered:", err.message);
@@ -33,6 +33,7 @@ if (process.env.REDIS_URL) {
 				"ENETUNREACH",
 				"ETIMEDOUT",
 				"ECONNREFUSED",
+				"getaddrinfo",
 			];
 			return targetErrors.some((targetError) =>
 				err.message.includes(targetError)
@@ -42,8 +43,12 @@ if (process.env.REDIS_URL) {
 		family: 4, // Force IPv4
 		keepAlive: true,
 		// Additional Railway optimizations
-		connectTimeout: 60000,
-		lazyConnect: true,
+		autoResubscribe: true,
+		autoResendUnfulfilledCommands: true,
+		// Add DNS lookup timeout
+		dns: {
+			timeout: 10000,
+		},
 	});
 } else {
 	// Fallback to individual Redis configuration
@@ -80,12 +85,15 @@ redisClient.on("error", (err) => {
 	console.error(`Redis connection error: ${err.message}`);
 	// For Railway deployment, ENOTFOUND errors are common during startup
 	if (
-		err.message.includes("ENOTFOUND") &&
-		err.message.includes("railway.internal")
+		err.message.includes("ENOTFOUND") ||
+		err.message.includes("railway.internal") ||
+		err.message.includes("getaddrinfo")
 	) {
 		console.log(
-			"Railway Redis internal network issue detected. This is normal during deployment."
+			"Railway Redis network issue detected. This is normal during deployment startup."
 		);
+		// Don't exit the process, let retry strategy handle it
+		return;
 	}
 	// Don't crash the app, just log the error
 });
@@ -95,15 +103,15 @@ redisClient.on("connect", () => {
 });
 
 redisClient.on("ready", () => {
-	console.log("Redis client is ready");
+	console.log("Redis client is ready and operational");
 });
 
 redisClient.on("reconnecting", (delay) => {
-	console.log(`Reconnecting to Redis in ${delay}ms`);
+	console.log(`Reconnecting to Redis in ${delay}ms...`);
 });
 
 redisClient.on("close", () => {
-	console.log("Redis connection closed");
+	console.log("Redis connection closed - will attempt to reconnect");
 });
 
 redisClient.on("end", () => {
@@ -111,34 +119,44 @@ redisClient.on("end", () => {
 });
 
 // Test connection on startup with retries
-const testRedisConnection = async (retries = 5) => {
+const testRedisConnection = async (retries = 10) => {
+	console.log("Starting Redis connection test...");
+
 	for (let i = 0; i < retries; i++) {
 		try {
+			// Wait for connection to be ready first
+			if (redisClient.status !== "ready") {
+				await redisClient.connect();
+			}
+
 			await redisClient.ping();
-			console.log("Redis connection test successful");
+			console.log("✅ Redis connection test successful");
 			return true;
 		} catch (error) {
 			console.warn(
-				`Redis connection test failed (attempt ${i + 1}/${retries}):`,
+				`⚠️ Redis connection test failed (attempt ${i + 1}/${retries}):`,
 				error.message
 			);
+
 			if (i < retries - 1) {
-				const delay = (i + 1) * 3000; // Progressive delay: 3s, 6s, 9s, etc.
-				console.log(`Waiting ${delay}ms before retry...`);
+				const delay = Math.min((i + 1) * 5000, 30000); // Progressive delay: 5s, 10s, 15s, up to 30s
+				console.log(`⏳ Waiting ${delay}ms before retry...`);
 				await new Promise((resolve) => setTimeout(resolve, delay));
 			}
 		}
 	}
+
 	console.warn(
-		"All Redis connection tests failed. Application will continue without Redis caching"
+		"❌ All Redis connection tests failed. Application will continue without Redis caching"
 	);
 	return false;
 };
 
 // Test connection after Railway deployment settles
+// Use longer delay for Railway's DNS propagation
 setTimeout(() => {
-	testRedisConnection(8); // More retries for Railway
-}, 5000); // Longer initial delay for Railway
+	testRedisConnection(12); // More retries with longer delays for Railway
+}, 10000); // Longer initial delay for Railway DNS to propagate
 
 // Graceful shutdown handler
 process.on("SIGTERM", () => {
@@ -154,6 +172,12 @@ process.on("SIGINT", () => {
 // Helper function to safely execute Redis commands
 const safeRedisOperation = async (operation, fallback = null) => {
 	try {
+		// Check if Redis is connected before attempting operation
+		if (redisClient.status !== "ready") {
+			console.warn("Redis not ready, using fallback value");
+			return fallback;
+		}
+
 		const result = await operation();
 		return result;
 	} catch (error) {
@@ -162,8 +186,14 @@ const safeRedisOperation = async (operation, fallback = null) => {
 	}
 };
 
+// Helper function to check Redis health
+const isRedisHealthy = () => {
+	return redisClient.status === "ready";
+};
+
 // Export both client and helper
 module.exports = {
 	redisClient,
 	safeRedisOperation,
+	isRedisHealthy,
 };
