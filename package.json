@@ -26,6 +26,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
+    "script": "node ./scripts/createBusinessAndSuperAdmin.js",
     "test": "",
     "swagger": "node swagger.js && nodemon index.js",
     "swagger:gen": "node generate-swagger.js",
