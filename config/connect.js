@@ -9,7 +9,8 @@ const sequelize = new Sequelize(
   {
     host: process.env.DBHOST,
     logging: false,
-    dialect: "mysql"
+    dialect: "mysql",
+    port: process.env.DBPORT,
   });
   console.log("im out of connect.js");
 
