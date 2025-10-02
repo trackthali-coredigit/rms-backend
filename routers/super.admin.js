@@ -139,8 +139,8 @@ router.post(
 	"/create_admin",
 	business_image.fields([{ name: "business_image" }]),
 	[
-		check("business_image").custom(({ req }) => {
-			if (!req.files || !req.files.business_image) {
+		check("business_image").custom((value, { req }) => {
+			if (!req || !req.files || !req.files.business_image) {
 				throw new Error("business_image is required");
 			}
 			if (req.files.business_image.length > 1) {
