@@ -9,8 +9,12 @@ module.exports = (sequelize, DataTypes) => {
 				allowNull: false,
 			},
 			ingrediant_id: {
-				type: DataTypes.STRING,
+				type: DataTypes.INTEGER,
 				defaultValue: null,
+				references: {
+					model: "tbl_ingrediant",
+					key: "ingrediant_id",
+				},
 			},
 			business_id: {
 				type: DataTypes.INTEGER,

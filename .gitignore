@@ -8,6 +8,7 @@ node_modules/
 dist/
 .env
 .prod.env
+.local.env
 *notification.json
 # Compiled Java class files
 *.class
