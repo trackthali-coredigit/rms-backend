@@ -22,6 +22,7 @@ let validation = (req, res, next) => {
  *   post:
  *     summary: Super admin sign in
  *     tags: [SuperAdmin]
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
@@ -128,7 +129,6 @@ router.post(
  *               tax:
  *                 type: number
  *                 format: float
- *               description: Tax percentage (0-100)
  *     responses:
  *       200:
  *         description: Admin created
@@ -140,11 +140,11 @@ router.post(
 	business_image.fields([{ name: "business_image" }]),
 	[
 		check("business_image").custom((value, { req }) => {
-			if (!req.files || !req.files.business_image) {
+			if (!req || !req.files || !req.files.business_image) {
 				throw new Error("business_image is required");
 			}
 			if (req.files.business_image.length > 1) {
-				req.files.item_image.forEach((element) => {
+				req.files.business_image.forEach((element) => {
 					fs.unlinkSync(element.path);
 				});
 				throw new Error("Maximum 1 images allowed");
@@ -310,7 +310,6 @@ router.post(
  *               tax:
  *                 type: number
  *                 format: float
- *               description: Tax percentage (0-100)
  *     responses:
  *       200:
  *         description: Admin edited

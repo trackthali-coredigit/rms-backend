@@ -2,6 +2,33 @@
 const swaggerJSDoc = require("swagger-jsdoc");
 const fs = require("fs");
 
+// Determine the environment and set appropriate server URLs
+const getServerUrls = () => {
+	const servers = [];
+
+	// Add Heroku production server first (primary)
+	servers.push({
+		url: "https://track-thali-5d8e8ba879c1.herokuapp.com",
+		description: "Heroku Production Server",
+	});
+
+	// Always include local development server as fallback
+	servers.push({
+		url: "http://127.0.0.1:9000",
+		description: "Local Development Server",
+	});
+
+	// Add custom production URL if provided
+	if (process.env.PRODUCTION_URL) {
+		servers.push({
+			url: process.env.PRODUCTION_URL,
+			description: "Custom Production Server",
+		});
+	}
+
+	return servers;
+};
+
 const options = {
 	definition: {
 		openapi: "3.0.0",
@@ -11,11 +38,19 @@ const options = {
 			description:
 				"API documentation for the MABO Restaurant Management System",
 		},
-		servers: [
+		servers: getServerUrls(),
+		components: {
+			securitySchemes: {
+				bearerAuth: {
+					type: "http",
+					scheme: "bearer",
+					bearerFormat: "JWT",
+				},
+			},
+		},
+		security: [
 			{
-				// Add Env Swagger End Point
-				url: "http://127.0.0.1:9000",
-				description: "Local server",
+				bearerAuth: [],
 			},
 		],
 	},
@@ -33,4 +68,9 @@ const options = {
 
 const swaggerSpec = swaggerJSDoc(options);
 fs.writeFileSync("./swagger.json", JSON.stringify(swaggerSpec, null, 2));
+
 console.log("swagger.json generated!");
+console.log(`Generated ${swaggerSpec.servers.length} server(s):`);
+swaggerSpec.servers.forEach((server, index) => {
+	console.log(`  ${index + 1}. ${server.description}: ${server.url}`);
+});

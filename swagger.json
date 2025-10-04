@@ -7,8 +7,26 @@
   },
   "servers": [
     {
+      "url": "https://track-thali-5d8e8ba879c1.herokuapp.com",
+      "description": "Heroku Production Server"
+    },
+    {
       "url": "http://127.0.0.1:9000",
-      "description": "Local server"
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
     }
   ],
   "paths": {
@@ -114,7 +132,7 @@
                   },
                   "tax": {
                     "type": "number",
-                    "description": "Tax percentage (0-100)"
+                    "format": "float"
                   }
                 }
               }
@@ -192,7 +210,7 @@
                   },
                   "tax": {
                     "type": "number",
-                    "description": "Tax percentage (0-100)"
+                    "format": "float"
                   }
                 }
               }
@@ -2759,18 +2777,5 @@
       }
     }
   },
- "components": {
-  "securitySchemes": {
-    "bearerAuth": {
-      "type": "http",
-      "scheme": "bearer",
-      "bearerFormat": "JWT"
-    }
-  }
-},
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+  "tags": []
 }

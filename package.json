@@ -25,7 +25,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js",
+    "start": "node swagger.js && nodemon index.js",
     "test": "",
     "swagger": "node swagger.js && nodemon index.js",
     "swagger:gen": "node generate-swagger.js"
