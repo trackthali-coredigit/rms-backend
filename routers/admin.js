@@ -475,6 +475,7 @@ router.get(
 	"/getCategoryList",
 	[check("page").notEmpty().withMessage("page is required")],
 	validation,
+	authMiddleware,
 	admin.getCategoryList
 );
 

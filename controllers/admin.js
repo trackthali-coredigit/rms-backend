@@ -1022,7 +1022,8 @@ const deleteItem = async (req, res) => {
 };
 const getCategoryList = async (req, res) => {
 	try {
-		let { page, business_id } = req.body;
+		let { page } = req.query;
+		let { business_id } = req.userData;
 		const pageSize = 20;
 		let whereClause;
 
