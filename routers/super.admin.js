@@ -1,7 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const business_image = multer({ dest: "uploads/business_image" });
+// Use memory storage for Cloudinary uploads
+const business_image = multer({
+	storage: multer.memoryStorage(),
+	limits: {
+		fileSize: 10 * 1024 * 1024, // 10MB limit
+	},
+});
 const { check, validationResult } = require("express-validator");
 
 const authMiddleware = require("../middleware/auth_middleware");

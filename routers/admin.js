@@ -1,7 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const upload = multer({ dest: "uploads/item_image" });
+// Use memory storage for Cloudinary uploads
+const upload = multer({
+	storage: multer.memoryStorage(),
+	limits: {
+		fileSize: 4 * 1024 * 1024, // 4MB limit
+	},
+});
 const { check, validationResult } = require("express-validator");
 const authMiddleware = require("../middleware/auth_middleware");
 console.log("im in admin.js router");
@@ -687,6 +693,7 @@ router.delete(
 			.withMessage("Image ID must be a number"),
 	],
 	validation,
+	authMiddleware,
 	admin.deleteItemImage
 );
 

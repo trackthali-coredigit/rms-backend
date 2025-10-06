@@ -6,6 +6,12 @@ const common_fun = require("../common/common_fun");
 const jwtSecretKey = process.env.JWT_SECRET_KEY;
 const fs = require("fs");
 const { Op } = require("sequelize");
+const {
+	validateImageFile,
+	uploadToCloudinary,
+	extractPublicIdFromUrl,
+	deleteFromCloudinary,
+} = require("../common/cloudinaryUtils");
 
 const SuperAdminSignIn = async (req, res) => {
 	try {
@@ -113,15 +119,49 @@ const createAdmin = async (req, res) => {
 		}
 		const hashedPassword = await bcrypt.hash(password, 10);
 
+		let businessImageUrl = null;
 		let { business_image } = req.files;
-		const ext = business_image[0].originalname.split(".").pop();
-		const imageUrlMedia = business_image[0].filename;
-		const imageUrlWithExt = `${business_image[0].filename}.${ext}`;
-		fs.renameSync(
-			`uploads/business_image/${imageUrlMedia}`,
-			`uploads/business_image/${imageUrlWithExt}`
+
+		// Validate business image
+		const imageValidation = validateImageFile(
+			business_image[0],
+			["jpg", "jpeg", "png"],
+			4 * 1024 * 1024 // 4MB
 		);
-		business_image = `uploads/business_image/${imageUrlWithExt}`;
+
+		if (!imageValidation.isValid) {
+			// Note: With memory storage, no files to clean up on disk
+			return res.status(400).json({
+				Status: 0,
+				message: imageValidation.error,
+			});
+		}
+
+		// Upload business image to Cloudinary
+		try {
+			const ext = business_image[0].originalname.split(".").pop().toLowerCase();
+			const uniqueId = `business_${Date.now()}_${Math.random()
+				.toString(36)
+				.substr(2, 9)}`;
+			const publicId = `${uniqueId}.${ext}`;
+
+			const cloudinaryResult = await uploadToCloudinary(
+				business_image[0].buffer,
+				"rms/business_images",
+				publicId
+			);
+
+			businessImageUrl = cloudinaryResult.url;
+		} catch (uploadError) {
+			console.error(
+				"Error uploading business image to Cloudinary:",
+				uploadError
+			);
+			return res.status(500).json({
+				Status: 0,
+				message: "Failed to upload business image. Please try again.",
+			});
+		}
 
 		const existBusiness = await db.Business.create({
 			business_name,
@@ -129,7 +169,7 @@ const createAdmin = async (req, res) => {
 			business_phone_no,
 			country_code: business_country_code,
 			iso_code: business_iso_code,
-			business_image,
+			business_image: businessImageUrl,
 			tax,
 		});
 		await db.User.create({
@@ -232,17 +272,69 @@ const editAdmin = async (req, res) => {
 
 		if (req.files && req.files.business_image) {
 			let { business_image } = req.files;
-			if (existingBussiness.business_image != null) {
-				fs.unlinkSync(existingBussiness.business_image);
-			}
-			const ext = business_image[0].originalname.split(".").pop();
-			const imageUrlMedia = business_image[0].filename;
-			const imageUrlWithExt = `${business_image[0].filename}.${ext}`;
-			fs.renameSync(
-				`uploads/business_image/${imageUrlMedia}`,
-				`uploads/business_image/${imageUrlWithExt}`
+
+			// Validate business image
+			const imageValidation = validateImageFile(
+				business_image[0],
+				["jpg", "jpeg", "png"],
+				4 * 1024 * 1024 // 4MB
 			);
-			businessUpdateData.business_image = `uploads/business_image/${imageUrlWithExt}`;
+
+			if (!imageValidation.isValid) {
+				// Note: With memory storage, no files to clean up on disk
+				return res.status(400).json({
+					Status: 0,
+					message: imageValidation.error,
+				});
+			}
+
+			// Delete old image from Cloudinary if it exists
+			if (existingBussiness.business_image) {
+				try {
+					const oldPublicId = extractPublicIdFromUrl(
+						existingBussiness.business_image
+					);
+					if (oldPublicId) {
+						await deleteFromCloudinary(oldPublicId);
+						console.log(
+							`Successfully deleted old business image: ${oldPublicId}`
+						);
+					}
+				} catch (deleteError) {
+					console.warn(
+						`Failed to delete old business image: ${deleteError.message}`
+					);
+				}
+			}
+
+			// Upload new business image to Cloudinary
+			try {
+				const ext = business_image[0].originalname
+					.split(".")
+					.pop()
+					.toLowerCase();
+				const uniqueId = `business_${Date.now()}_${Math.random()
+					.toString(36)
+					.substr(2, 9)}`;
+				const publicId = `${uniqueId}.${ext}`;
+
+				const cloudinaryResult = await uploadToCloudinary(
+					business_image[0].buffer,
+					"rms/business_images",
+					publicId
+				);
+
+				businessUpdateData.business_image = cloudinaryResult.url;
+			} catch (uploadError) {
+				console.error(
+					"Error uploading business image to Cloudinary:",
+					uploadError
+				);
+				return res.status(500).json({
+					Status: 0,
+					message: "Failed to upload business image. Please try again.",
+				});
+			}
 		}
 
 		await existingBussiness.update(businessUpdateData);

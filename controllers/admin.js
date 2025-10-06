@@ -6,6 +6,13 @@ const common_fun = require("../common/common_fun");
 const fs = require("fs");
 const { Op } = require("sequelize");
 const { sendNotification } = require("../common/notification");
+const {
+	uploadToCloudinary,
+	deleteFromCloudinary,
+	uploadMultipleToCloudinary,
+	extractPublicIdFromUrl,
+	validateMultipleImageFiles,
+} = require("../common/cloudinaryUtils");
 const signin = async (req, res) => {
 	try {
 		console.log("1");
@@ -702,49 +709,47 @@ const addItem = async (req, res) => {
 			stock,
 		});
 
-		// Image Validation
-		const acceptedExtensions = ["jpg", "jpeg", "png", "webp"];
-		const maxFileSize = 10 * 1024 * 1024; // 10MB
-		// Validate file extension and size before processing
-		const invalidFileType = images.some(
-			(file) =>
-				!acceptedExtensions.includes(
-					file.originalname.split(".").pop().toLowerCase()
-				)
+		// Image Validation using Cloudinary utils
+		const imageValidation = validateMultipleImageFiles(
+			images,
+			["jpg", "jpeg", "png"],
+			4 * 1024 * 1024, // 4MB
+			10 // max 10 images
 		);
-		const invalidFileSize = images.some((file) => file.size > maxFileSize);
-		if (invalidFileType) {
+
+		if (!imageValidation.isValid) {
+			// Note: With memory storage, no files to clean up on disk
 			return res.status(400).json({
 				Status: 0,
-				message: "Invalid file type. Only jpg, jpeg, and png are allowed",
+				message: imageValidation.error,
 			});
 		}
-		if (invalidFileSize) {
-			return res
-				.status(400)
-				.json({ Status: 0, message: "Image size must be less than 10MB" });
-		}
 
-		// Processing and saving image files
-		const imageProcessingPromises = images.map(async (element) => {
-			const ext = element.originalname.split(".").pop().toLowerCase();
-			const imageUrlMedia = element.filename;
-			const imageUrlWithExt = `${imageUrlMedia}.${ext}`;
-
-			// Consider using async file operation if available in your environment
-			fs.renameSync(
-				`uploads/item_image/${imageUrlMedia}`,
-				`uploads/item_image/${imageUrlWithExt}`
+		// Upload images to Cloudinary
+		try {
+			const cloudinaryResults = await uploadMultipleToCloudinary(
+				images,
+				"rms/item_images"
 			);
 
-			return db.Item_Img.create({
-				item_id: item.item_id,
-				image: `uploads/item_image/${imageUrlWithExt}`,
+			// Save image URLs to database
+			const imageProcessingPromises = cloudinaryResults.map((result) => {
+				return db.Item_Img.create({
+					item_id: item.item_id,
+					image: result.url,
+					public_id: result.public_id, // Store public_id for deletion
+				});
 			});
-		});
 
-		// Wait for all images to be processed
-		await Promise.all(imageProcessingPromises);
+			// Wait for all images to be processed
+			await Promise.all(imageProcessingPromises);
+		} catch (uploadError) {
+			console.error("Error uploading images to Cloudinary:", uploadError);
+			return res.status(500).json({
+				Status: 0,
+				message: "Failed to upload images. Please try again.",
+			});
+		}
 
 		if (Array.isArray(ingredients) && ingredients.length > 0) {
 			await db.Ingrediant.bulkCreate(
@@ -840,50 +845,67 @@ const editItem = async (req, res) => {
 			stock,
 		});
 		if (req.files != undefined && req.files.item_image) {
-			// Image Validation
-			const acceptedExtensions = ["jpg", "jpeg", "png"];
-			const maxFileSize = 5 * 1024 * 1024; // 5MB
+			// Find previous images for this item
+			const previousImages = await db.Item_Img.findAll({ where: { item_id: item.item_id } });
+
+			// Delete previous images from Cloudinary
+		 for (const img of previousImages) {
+				let publicId = img.public_id;
+				if (!publicId && img.image) {
+					publicId = extractPublicIdFromUrl(img.image);
+				}
+				if (publicId) {
+					try {
+						await deleteFromCloudinary(publicId);
+					} catch (cloudinaryError) {
+						console.warn(`Failed to delete from Cloudinary: ${cloudinaryError.message}`);
+					}
+				}
+			}
+
+			// Delete previous images from Item_Img table for this item
+			await db.Item_Img.destroy({ where: { item_id: item.item_id } });
+
+			// Image Validation using Cloudinary utils
 			const images = req.files.item_image;
-			// Validate file extension and size before processing
-			const invalidFileType = images.some(
-				(file) =>
-					!acceptedExtensions.includes(
-						file.originalname.split(".").pop().toLowerCase()
-					)
+			const imageValidation = validateMultipleImageFiles(
+				images,
+				["jpg", "jpeg", "png"],
+				4 * 1024 * 1024, // 4MB
+				10 // max 10 images
 			);
-			const invalidFileSize = images.some((file) => file.size > maxFileSize);
-			if (invalidFileType) {
+
+			if (!imageValidation.isValid) {
 				return res.status(400).json({
 					Status: 0,
-					message: "Invalid file type. Only jpg, jpeg, and png are allowed",
+					message: imageValidation.error,
 				});
 			}
-			if (invalidFileSize) {
-				return res
-					.status(400)
-					.json({ Status: 0, message: "Image size must be less than 5MB" });
-			}
 
-			// Processing and saving image files
-			const imageProcessingPromises = images.map(async (element) => {
-				const ext = element.originalname.split(".").pop().toLowerCase();
-				const imageUrlMedia = element.filename;
-				const imageUrlWithExt = `${imageUrlMedia}.${ext}`;
-
-				// Consider using async file operation if available in your environment
-				fs.renameSync(
-					`uploads/item_image/${imageUrlMedia}`,
-					`uploads/item_image/${imageUrlWithExt}`
+			// Upload images to Cloudinary
+			try {
+				const cloudinaryResults = await uploadMultipleToCloudinary(
+					images,
+					"rms/item_images"
 				);
 
-				return db.Item_Img.create({
-					item_id: item.item_id,
-					image: `uploads/item_image/${imageUrlWithExt}`,
+				// Save new image URLs to database
+				const imageProcessingPromises = cloudinaryResults.map((result) => {
+					return db.Item_Img.create({
+						item_id: item.item_id,
+						image: result.url,
+						public_id: result.public_id,
+					});
 				});
-			});
 
-			// Wait for all images to be processed
-			await Promise.all(imageProcessingPromises);
+				await Promise.all(imageProcessingPromises);
+			} catch (uploadError) {
+				console.error("Error uploading images to Cloudinary:", uploadError);
+				return res.status(500).json({
+					Status: 0,
+					message: "Failed to upload images. Please try again.",
+				});
+			}
 		}
 		if (Array.isArray(ingredients) && ingredients.length > 0) {
 			// Remove existing ingredients for the item
@@ -932,7 +954,35 @@ const deleteItemImage = async (req, res) => {
 			return res.status(404).json({ Status: 0, message: "Image not found" });
 		}
 
-		// Delete the image from the database
+		// Delete the image from Cloudinary if it has a public_id or extract from URL
+		try {
+			let publicId = image.public_id;
+
+			// If no public_id stored, try to extract from URL (for backward compatibility)
+			if (!publicId && image.image) {
+				publicId = extractPublicIdFromUrl(image.image);
+			}
+
+			// Delete from Cloudinary if we have a public_id
+			if (publicId) {
+				try {
+					await deleteFromCloudinary(publicId);
+					console.log(
+						`Successfully deleted image from Cloudinary: ${publicId}`
+					);
+				} catch (cloudinaryError) {
+					console.warn(
+						`Failed to delete from Cloudinary: ${cloudinaryError.message}`
+					);
+					// Continue with database deletion even if Cloudinary deletion fails
+				}
+			}
+		} catch (error) {
+			console.error("Error processing Cloudinary deletion:", error);
+			// Continue with database deletion
+		}
+
+		// Delete the image record from the database
 		await image.destroy();
 
 		res
