@@ -846,10 +846,12 @@ const editItem = async (req, res) => {
 		});
 		if (req.files != undefined && req.files.item_image) {
 			// Find previous images for this item
-			const previousImages = await db.Item_Img.findAll({ where: { item_id: item.item_id } });
+			const previousImages = await db.Item_Img.findAll({
+				where: { item_id: item.item_id },
+			});
 
 			// Delete previous images from Cloudinary
-		 for (const img of previousImages) {
+			for (const img of previousImages) {
 				let publicId = img.public_id;
 				if (!publicId && img.image) {
 					publicId = extractPublicIdFromUrl(img.image);
@@ -858,7 +860,9 @@ const editItem = async (req, res) => {
 					try {
 						await deleteFromCloudinary(publicId);
 					} catch (cloudinaryError) {
-						console.warn(`Failed to delete from Cloudinary: ${cloudinaryError.message}`);
+						console.warn(
+							`Failed to delete from Cloudinary: ${cloudinaryError.message}`
+						);
 					}
 				}
 			}
@@ -1681,7 +1685,7 @@ const addTable = async (req, res) => {
 const getTableList = async (req, res) => {
 	try {
 		const user_id = req.userData.user_id;
-		let { page } = req.body;
+		let { page } = req.query;
 		const pageSize = 20;
 		const user = await db.User.findOne({
 			where: {
