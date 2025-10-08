@@ -926,7 +926,13 @@ const UpdateOrderItem = async (req, res) => {
 			where: {
 				[Op.and]: [
 					{ user_id: current_user_id },
-					{ [Op.or]: [{ role: "waiter" }, { role: "admin" }] },
+					{
+						[Op.or]: [
+							{ role: "waiter" },
+							{ role: "barista" },
+							{ role: "supervisor" },
+						],
+					},
 				],
 			},
 		});

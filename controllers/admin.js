@@ -2758,6 +2758,95 @@ const filter = async (req, res) => {
 	}
 };
 
+const disableItemStatus = async (req, res) => {
+	try {
+		const user_id = req.userData.user_id;
+		const { item_id, is_disabled } = req.body;
+
+		// Check if user is admin or supervisor
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id },
+					{ [Op.or]: [{ role: "admin" }, { role: "supervisor" }] },
+				],
+			},
+		});
+
+		if (!user) {
+			return res.status(403).json({
+				Status: 0,
+				message:
+					"Access denied. Only admin or supervisor can modify item status.",
+			});
+		}
+
+		// Check if item exists and belongs to the user's business
+		const item = await db.Items.findOne({
+			where: {
+				item_id,
+				business_id: user.business_id,
+			},
+		});
+
+		if (!item) {
+			return res.status(404).json({
+				Status: 0,
+				message: "Item not found or does not belong to your business.",
+			});
+		}
+
+		// If trying to disable the item, check for active orders in the past 24 hours
+		if (is_disabled === true) {
+			const twentyFourHoursAgo = new Date();
+			twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+			// Check for order items with active statuses in the past 24 hours
+			const activeOrderItems = await db.Order_Item.findAll({
+				where: {
+					item_id: item_id,
+					business_id: user.business_id,
+					order_item_status: {
+						[Op.in]: ["to_do", "in_making", "ready_to_serve"],
+					},
+					createdAt: {
+						[Op.gte]: twentyFourHoursAgo,
+					},
+				},
+			});
+
+			if (activeOrderItems.length > 0) {
+				return res.status(400).json({
+					Status: 0,
+					message:
+						"Cannot disable item. There are active orders (to_do, in_making, or ready_to_serve) for this item in the past 24 hours.",
+					activeOrders: activeOrderItems.length,
+				});
+			}
+		}
+
+		// Update the item status
+		await db.Items.update(
+			{ is_disabled: is_disabled },
+			{ where: { item_id: item_id, business_id: user.business_id } }
+		);
+
+		const statusText = is_disabled ? "disabled" : "enabled";
+		res.status(200).json({
+			Status: 1,
+			message: `Item ${statusText} successfully`,
+			item: {
+				item_id: item.item_id,
+				item_name: item.item_name,
+				is_disabled: is_disabled,
+			},
+		});
+	} catch (error) {
+		console.error("Error toggling item status:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
+};
+
 module.exports = {
 	signin,
 	otp_verify,
@@ -2806,4 +2895,5 @@ module.exports = {
 	orderHistory,
 	orderDetails,
 	notificationList,
+	disableItemStatus,
 };

@@ -1581,6 +1581,95 @@ router.get(
 	admin.filter
 );
 
+//------------------------------------------------Toggle Item Status Routes------------------------------------------------//
+/**
+ * @swagger
+ * /disable/item/status:
+ *   put:
+ *     summary: Disable item or enable item
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               item_id:
+ *                 type: integer
+ *                 description: ID of the item to toggle
+ *               is_disabled:
+ *                 type: boolean
+ *                 description: Set to true to disable item, false to enable
+ *             required:
+ *               - item_id
+ *               - is_disabled
+ *     responses:
+ *       200:
+ *         description: Item status toggled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 Status:
+ *                   type: integer
+ *                   example: 1
+ *                 message:
+ *                   type: string
+ *                   example: "Item disabled successfully"
+ *                 item:
+ *                   type: object
+ *                   properties:
+ *                     item_id:
+ *                       type: integer
+ *                     item_name:
+ *                       type: string
+ *                     is_disabled:
+ *                       type: boolean
+ *       400:
+ *         description: Cannot disable item due to active orders
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 Status:
+ *                   type: integer
+ *                   example: 0
+ *                 message:
+ *                   type: string
+ *                   example: "Cannot disable item. There are active orders for this item in the past 24 hours."
+ *                 activeOrders:
+ *                   type: integer
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Item not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put(
+	"/disable/item/status",
+	[
+		check("item_id")
+			.not()
+			.isEmpty()
+			.withMessage("Item ID is required")
+			.isInt({ min: 1 })
+			.withMessage("Item ID must be a positive integer"),
+		check("is_disabled")
+			.not()
+			.isEmpty()
+			.withMessage("is_disabled field is required")
+			.isBoolean()
+			.withMessage("is_disabled must be a boolean value"),
+	],
+	validation,
+	authMiddleware,
+	admin.disableItemStatus
+);
+
 //------------------------------------------------Contact Us Routes------------------------------------------------//
 // TODO: Contact us route is commented as per the current requirement
 // /**
