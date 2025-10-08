@@ -1388,10 +1388,19 @@ const addStaff = async (req, res) => {
 			password: hashedPassword,
 		});
 
+		const staffResponse = {
+			user_id: newStaff.user_id || "",
+			first_name: newStaff.first_name || "",
+			last_name: newStaff.last_name || "",
+			email: newStaff.email || "",
+			role: newStaff.role || "",
+			phone_no: newStaff.phone_no || "",
+			business_id: newStaff.business_id || "",
+		};
 		res.status(201).json({
 			Status: 1,
 			message: "The Staff Added Successfully",
-			staff: newStaff,
+			staff: staffResponse,
 		});
 	} catch (error) {
 		console.error("Error adding staff:", error);
@@ -1433,6 +1442,18 @@ const getStaffList = async (req, res) => {
 				business_id: businessId,
 				role: role,
 			},
+			attributes: [
+				"user_id",
+				"business_id",
+				"email",
+				"first_name",
+				"last_name",
+				"username",
+				"role",
+				"iso_code",
+				"country_code",
+				"phone_no",
+			],
 			distinct: true,
 			limit: pageSize,
 			offset: offset,
@@ -1473,6 +1494,18 @@ const getStaffMemberDetail = async (req, res) => {
 				user_id: staffMemberId,
 				business_id: user.business_id,
 			},
+			attributes: [
+				"user_id",
+				"business_id",
+				"email",
+				"first_name",
+				"last_name",
+				"username",
+				"role",
+				"iso_code",
+				"country_code",
+				"phone_no",
+			],
 		});
 
 		if (!staffMember) {
