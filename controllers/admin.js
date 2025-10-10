@@ -302,7 +302,7 @@ const StaffForgetPassword = async (req, res) => {
 				) {
 					return res.status(404).json({
 						Status: 0,
-						message: "The User Not uthorize for this action",
+						message: "The User Not authorize for this action",
 					});
 				}
 
@@ -832,7 +832,10 @@ const editItem = async (req, res) => {
 			}
 		}
 
-		const item = await db.Items.findByPk(item_id);
+		const item = await db.Items.findByPk(item_id, {
+			where: { business_id: user.business_id },
+			include: [{ model: db.Item_Img }, { model: db.Ingrediant }],
+		});
 		if (!item) {
 			return res.status(404).json({ Status: 0, message: "The Item not found" });
 		}
@@ -1328,7 +1331,7 @@ const addStaff = async (req, res) => {
 		const {
 			first_name,
 			last_name,
-			// username,
+			username,
 			email,
 			country_code,
 			iso_code,
@@ -1339,16 +1342,14 @@ const addStaff = async (req, res) => {
 		if (user.role !== "admin" && user.role !== "supervisor") {
 			return res.status(401).json({ Status: 0, message: "Unauthorized" });
 		}
-		// const same_username = await db.User.findOne({
-		//   where: {
-		//     [Op.or]: [{ username }, { email }],
-		//   },
-		// });
-		// if (!!same_username) {
-		//   return res
-		//     .status(201)
-		//     .json({ Status: 0, message: "This email already Exist" });
-		// }
+		const same_username = await db.User.findOne({
+			where: { username },
+		});
+		if (!!same_username) {
+			return res
+				.status(201)
+				.json({ Status: 0, message: "This username already Exist" });
+		}
 		const same_email = await db.User.findOne({
 			where: { email },
 		});
@@ -1379,7 +1380,7 @@ const addStaff = async (req, res) => {
 			business_id: user.business_id,
 			first_name,
 			last_name,
-			// username,
+			username,
 			email,
 			country_code,
 			iso_code,
@@ -1396,6 +1397,9 @@ const addStaff = async (req, res) => {
 			role: newStaff.role || "",
 			phone_no: newStaff.phone_no || "",
 			business_id: newStaff.business_id || "",
+			username: newStaff.username || "",
+			iso_code: newStaff.iso_code || "",
+			country_code: newStaff.country_code || "",
 		};
 		res.status(201).json({
 			Status: 1,
@@ -1441,6 +1445,7 @@ const getStaffList = async (req, res) => {
 			where: {
 				business_id: businessId,
 				role: role,
+				is_deleted: false,
 			},
 			attributes: [
 				"user_id",
@@ -1614,7 +1619,7 @@ const deleteStaff = async (req, res) => {
 		if (req.userData.role != "admin" && req.userData.role != "supervisor") {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
-		const { staffMemberId } = req.body;
+		const { staffMemberId } = req.query;
 
 		const staffMember = await db.User.findOne({
 			where: {
@@ -1629,39 +1634,42 @@ const deleteStaff = async (req, res) => {
 				.json({ Status: 0, message: "The Staff member not found" });
 		}
 
-		if (staffMember.role == "barista") {
-			console.log(" im a brista...................................");
-			await db.Order.update(
-				{ barista_id: null },
-				{ where: { barista_id: staffMemberId } }
-			);
-		} else if (staffMember.role == "waiter") {
-			console.log(" im a waiter...................................");
+		//  soft delete by setting is_deleted to true
+		await staffMember.update({ is_deleted: true });
 
-			await db.Order.update(
-				{ waiter_id: null },
-				{ where: { waiter_id: staffMemberId } }
-			);
+		// if (staffMember.role == "barista") {
+		// 	console.log(" im a brista...................................");
+		// 	await db.Order.update(
+		// 		{ barista_id: null },
+		// 		{ where: { barista_id: staffMemberId } }
+		// 	);
+		// } else if (staffMember.role == "waiter") {
+		// 	console.log(" im a waiter...................................");
 
-			await db.Waiter.destroy({
-				where: { user_id: staffMemberId },
-			});
-		}
+		// 	await db.Order.update(
+		// 		{ waiter_id: null },
+		// 		{ where: { waiter_id: staffMemberId } }
+		// 	);
 
-		await db.Contact_Us.destroy({
-			where: { user_id: staffMemberId },
-		});
+		// 	await db.Waiter.destroy({
+		// 		where: { user_id: staffMemberId },
+		// 	});
+		// }
 
-		await db.Notification.destroy({
-			where: {
-				[Op.or]: [
-					{ notification_from: staffMemberId },
-					{ notification_to: staffMemberId },
-				],
-			},
-		});
+		// await db.Contact_Us.destroy({
+		// 	where: { user_id: staffMemberId },
+		// });
 
-		await staffMember.destroy();
+		// await db.Notification.destroy({
+		// 	where: {
+		// 		[Op.or]: [
+		// 			{ notification_from: staffMemberId },
+		// 			{ notification_to: staffMemberId },
+		// 		],
+		// 	},
+		// });
+
+		// await staffMember.destroy();
 
 		res
 			.status(200)
@@ -1718,7 +1726,7 @@ const addTable = async (req, res) => {
 const getTableList = async (req, res) => {
 	try {
 		const user_id = req.userData.user_id;
-		let { page } = req.query;
+		let { page, is_assigned_to_waiter, status } = req.query;
 		const pageSize = 20;
 		const user = await db.User.findOne({
 			where: {
@@ -1739,11 +1747,25 @@ const getTableList = async (req, res) => {
 		const offset = (page - 1) * pageSize;
 		const businessId = user.business_id;
 
-		// Fetch all tables associated with the user's business ID
+		// Build where clause with business_id and optional filters
+		const whereClause = {
+			business_id: businessId,
+			is_deleted: false,
+		};
+
+		// Add is_assigned_to_waiter filter if provided
+		if (is_assigned_to_waiter !== undefined && is_assigned_to_waiter !== "") {
+			whereClause.is_assigned_to_waiter = is_assigned_to_waiter === "true";
+		}
+
+		// Add status filter if provided
+		if (status !== undefined && status !== "") {
+			whereClause.status = status;
+		}
+
+		// Fetch all tables associated with the user's business ID with filters
 		let { count, rows } = await db.Tables.findAndCountAll({
-			where: {
-				business_id: businessId,
-			},
+			where: whereClause,
 			distinct: true,
 			limit: pageSize,
 			offset: offset,
@@ -2797,33 +2819,36 @@ const disableItemStatus = async (req, res) => {
 		}
 
 		// If trying to disable the item, check for active orders in the past 24 hours
-		if (is_disabled === true) {
-			const twentyFourHoursAgo = new Date();
-			twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+		// TODO: As per discussion with client, this condition is removed
+		// Keeping the code commented for future reference
+		// Uncomment if the condition needs to be re-applied
+		// if (is_disabled === true) {
+		// 	const twentyFourHoursAgo = new Date();
+		// 	twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
-			// Check for order items with active statuses in the past 24 hours
-			const activeOrderItems = await db.Order_Item.findAll({
-				where: {
-					item_id: item_id,
-					business_id: user.business_id,
-					order_item_status: {
-						[Op.in]: ["to_do", "in_making", "ready_to_serve"],
-					},
-					createdAt: {
-						[Op.gte]: twentyFourHoursAgo,
-					},
-				},
-			});
+		// 	// Check for order items with active statuses in the past 24 hours
+		// 	const activeOrderItems = await db.Order_Item.findAll({
+		// 		where: {
+		// 			item_id: item_id,
+		// 			business_id: user.business_id,
+		// 			order_item_status: {
+		// 				[Op.in]: ["to_do", "in_making", "ready_to_serve"],
+		// 			},
+		// 			createdAt: {
+		// 				[Op.gte]: twentyFourHoursAgo,
+		// 			},
+		// 		},
+		// 	});
 
-			if (activeOrderItems.length > 0) {
-				return res.status(400).json({
-					Status: 0,
-					message:
-						"Cannot disable item. There are active orders (to_do, in_making, or ready_to_serve) for this item in the past 24 hours.",
-					activeOrders: activeOrderItems.length,
-				});
-			}
-		}
+		// 	if (activeOrderItems.length > 0) {
+		// 		return res.status(400).json({
+		// 			Status: 0,
+		// 			message:
+		// 				"Cannot disable item. There are active orders (to_do, in_making, or ready_to_serve) for this item in the past 24 hours.",
+		// 			activeOrders: activeOrderItems.length,
+		// 		});
+		// 	}
+		// }
 
 		// Update the item status
 		await db.Items.update(

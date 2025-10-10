@@ -880,6 +880,8 @@ router.get(
  *                 type: string
  *               password:
  *                 type: string
+ *               username:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Staff member added successfully
@@ -901,12 +903,12 @@ router.post(
 			.withMessage("Last name is required")
 			.trim()
 			.escape(),
-		// check("username")
-		//   .not()
-		//   .isEmpty()
-		//   .withMessage("Username is required")
-		//   .trim()
-		//   .escape(),
+		check("username")
+			.optional()
+			.matches(/^[a-zA-Z0-9]+$/)
+			.withMessage("Username must be a combination of letters and numbers")
+			.trim()
+			.escape(),
 		check("email")
 			.isEmail()
 			.not()
@@ -1020,6 +1022,8 @@ router.post(
  *                 type: string
  *               staffMemberId:
  *                 type: integer
+ *               username:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Staff profile updated successfully
@@ -1161,6 +1165,20 @@ router.post(
  *           type: integer
  *         required: true
  *         description: Page number for pagination
+ *       - in: query
+ *         name: is_assigned_to_waiter
+ *         schema:
+ *           type: string
+ *           enum: [true, false]
+ *         required: false
+ *         description: Filter by whether table is assigned to waiter
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [available, reserved, occupied]
+ *         required: false
+ *         description: Filter by table status
  *     responses:
  *       200:
  *         description: List of tables
@@ -1169,7 +1187,17 @@ router.post(
  */
 router.get(
 	"/getTableList",
-	[check("page").notEmpty().withMessage("page is required")],
+	[
+		check("page").notEmpty().withMessage("page is required"),
+		check("is_assigned_to_waiter")
+			.optional()
+			.isIn(["true", "false"])
+			.withMessage("is_assigned_to_waiter must be 'true' or 'false'"),
+		check("status")
+			.optional()
+			.isIn(["available", "reserved", "occupied"])
+			.withMessage("status must be 'available', 'reserved', or 'occupied'"),
+	],
 	validation,
 	authMiddleware,
 	admin.getTableList
