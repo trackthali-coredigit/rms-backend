@@ -928,10 +928,15 @@ const editItem = async (req, res) => {
 				}))
 			);
 		}
+
+		const updatedItem = await db.Items.findByPk(item_id, {
+			where: { business_id: user.business_id },
+			include: [{ model: db.Item_Img }, { model: db.Ingrediant }],
+		});
 		res.status(200).json({
 			Status: 1,
 			message: "The Item updated successfully",
-			Item_Data: item,
+			Item_Data: updatedItem,
 		});
 	} catch (error) {
 		console.error("Error editing item:", error);

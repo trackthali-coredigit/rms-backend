@@ -1018,11 +1018,13 @@ router.post(
  *                 type: string
  *               phone_no:
  *                 type: string
- *               role:
- *                 type: string
  *               staffMemberId:
  *                 type: integer
  *               username:
+ *                 type: string
+ *               country_code:
+ *                 type: string
+ *               iso_code:
  *                 type: string
  *     responses:
  *       200:
