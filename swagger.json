@@ -423,6 +423,56 @@
         }
       }
     },
+    "/updateBusiness": {
+      "put": {
+        "summary": "Update business details",
+        "tags": [
+          "SuperAdmin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "business_id": {
+                    "type": "string"
+                  },
+                  "business_name": {
+                    "type": "string"
+                  },
+                  "business_email": {
+                    "type": "string"
+                  },
+                  "business_phone_no": {
+                    "type": "string"
+                  },
+                  "business_country_code": {
+                    "type": "string"
+                  },
+                  "business_iso_code": {
+                    "type": "string"
+                  },
+                  "tax": {
+                    "type": "number",
+                    "format": "float"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Business updated successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
     "/signin": {
       "post": {
         "summary": "Admin sign in",
@@ -1527,7 +1577,8 @@
                       "is_all",
                       "is_create",
                       "is_edit",
-                      "is_get"
+                      "is_get",
+                      "is_delete"
                     ]
                   }
                 }

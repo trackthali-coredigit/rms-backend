@@ -1438,7 +1438,7 @@ router.get("/getBusinessProfile", authMiddleware, admin.getBusinessProfile);
  *                 type: boolean
  *               value:
  *                 type: string
- *                 enum: [is_all, is_create, is_edit, is_get]
+ *                 enum: [is_all, is_create, is_edit, is_get, is_delete]
  *     responses:
  *       200:
  *         description: Business hours set
@@ -1467,7 +1467,7 @@ router.post(
 			.trim()
 			.escape(),
 		check("value")
-			.isIn(["is_all", "is_create", "is_edit", "is_get"])
+			.isIn(["is_all", "is_create", "is_edit", "is_get", "is_delete"])
 			.withMessage("Invalid value for 'value' parameter")
 			.trim()
 			.escape(),

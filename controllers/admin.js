@@ -13,6 +13,7 @@ const {
 	extractPublicIdFromUrl,
 	validateMultipleImageFiles,
 } = require("../common/cloudinaryUtils");
+const { db } = require("../config/db");
 const signin = async (req, res) => {
 	try {
 		console.log("1");
@@ -532,6 +533,21 @@ const businessHours = async (req, res) => {
 					message: "Business hours list get successfully",
 					businesshoursList,
 				});
+			case "is_delete":
+				const deleted = await db.BusinessHours.destroy({
+					where: { business_id: user.business_id },
+				});
+				if (deleted > 0) {
+					return res.status(200).json({
+						Status: 1,
+						message: "Business hours deleted successfully",
+					});
+				} else {
+					return res.status(404).json({
+						Status: 0,
+						message: "Business hours not found",
+					});
+				}
 			default:
 				return res
 					.status(400)
@@ -2424,6 +2440,11 @@ const getProfileDetails = async (req, res) => {
 			],
 		});
 
+		const hasBusinessHours =
+			(await db.BusinessHours.count({
+				where: { business_id: userProfile.business_id },
+			})) > 0;
+
 		if (!userProfile) {
 			return res
 				.status(404)
@@ -2443,6 +2464,7 @@ const getProfileDetails = async (req, res) => {
 			Status: 1,
 			message: "The User profile details retrieved successfully",
 			userProfile,
+			setBussinessHours: hasBusinessHours,
 			notificationCount,
 		});
 	} catch (error) {

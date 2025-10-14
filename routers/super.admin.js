@@ -695,5 +695,87 @@ router.get(
 	superAdmin.getBusinessItemList
 );
 
+/**
+ * @swagger
+ * /updateBusiness:
+ *   put:
+ *     summary: Update business details
+ *     tags: [SuperAdmin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               business_id:
+ *                 type: string
+ *               business_name:
+ *                 type: string
+ *               business_email:
+ *                 type: string
+ *               business_phone_no:
+ *                 type: string
+ *               business_country_code:
+ *                 type: string
+ *               business_iso_code:
+ *                 type: string
+ *               tax:
+ *                 type: number
+ *                 format: float
+ *     responses:
+ *       200:
+ *         description: Business updated successfully
+ *       400:
+ *         description: Validation error
+ */
+router.put(
+	"/updateBusiness",
+	[
+		check("business_id")
+			.not()
+			.isEmpty()
+			.withMessage("business_id is required")
+			.trim()
+			.escape(),
+		check("business_name").optional().trim().escape(),
+		check("business_email")
+			.optional()
+			.isEmail()
+			.withMessage("Invalid business_email format")
+			.trim()
+			.escape(),
+		check("business_phone_no")
+			.optional()
+			.isMobilePhone()
+			.withMessage("Valid business_phone_no is required")
+			.trim()
+			.escape(),
+		check("business_country_code")
+			.optional()
+			.isLength({ min: 1, max: 4 })
+			.withMessage(
+				"business_country_code must be between 1 and 4 characters long"
+			)
+			.trim()
+			.escape(),
+		check("business_iso_code")
+			.optional()
+			.isLength({ min: 2, max: 3 })
+			.withMessage("business_iso_code must be 2 or 3 characters long")
+			.trim()
+			.escape(),
+		check("tax")
+			.optional()
+			.isFloat({ min: 0, max: 100 })
+			.withMessage("Tax must be a positive number between 0 and 100")
+			.trim()
+			.escape(),
+	],
+	validation,
+	authMiddleware,
+	superAdmin.updateBusiness
+);
+
 console.log("im out of superAdmin router");
 module.exports = router;
