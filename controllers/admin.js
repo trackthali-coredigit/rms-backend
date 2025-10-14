@@ -2432,10 +2432,22 @@ const getProfileDetails = async (req, res) => {
 		// Find the user profile details
 		const userProfile = await db.User.findOne({
 			where: { user_id },
-			attributes: { exclude: ["password"] }, // Exclude password from the result
+			attributes: {
+				exclude: [
+					"password",
+					"is_verify",
+					"otp_created_at",
+					"otp",
+					"is_account_setup",
+					"is_deleted",
+					"createdAt",
+					"updatedAt",
+				],
+			}, // Exclude password from the result
 			include: [
 				{
 					model: db.Business,
+					attributes: { exclude: ["createdAt", "updatedAt", "is_deleted"] },
 				},
 			],
 		});
