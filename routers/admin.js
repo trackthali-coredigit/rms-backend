@@ -1477,6 +1477,54 @@ router.post(
 	admin.businessHours
 );
 
+/**
+ *  @swagger
+ * /businessHours/{business_hours_id}/status:
+ *   put:
+ *     summary: Toggle the status of business hours for a specific day
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: path
+ *         name: business_hours_id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID of the business hours entry to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               day_status:
+ *                 type: boolean
+ *                 description: Status of the day (open/closed)
+ *     responses:
+ *       200:
+ *         description: Business hours status updated successfully
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Business hours entry not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put(
+	"/businessHours/:business_hours_id/status",
+	[
+		check("day_status")
+			.not()
+			.isEmpty()
+			.withMessage("Day status is required")
+			.isBoolean()
+			.withMessage("Day status must be a boolean value"),
+	],
+	validation,
+	authMiddleware,
+	admin.toggleBusinessHoursStatus
+);
+
 //------------------------------------------------Filter Routes------------------------------------------------//
 
 /**

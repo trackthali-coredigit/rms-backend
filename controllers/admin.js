@@ -558,6 +558,35 @@ const businessHours = async (req, res) => {
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });
 	}
 };
+
+const toggleBusinessHoursStatus = async (req, res) => {
+	try {
+		const role = req.userData.role;
+		if (role !== "admin" && role !== "super_admin") {
+			return res
+				.status(403)
+				.json({ Status: 0, message: "Forbidden: Admins only" });
+		}
+		const { business_hours_id } = req.params;
+		const { day_status } = req.body;
+		const businessHours = await db.BusinessHours.findByPk(business_hours_id);
+		if (!businessHours) {
+			return res
+				.status(404)
+				.json({ Status: 0, message: "Business hours not found" });
+		}
+		businessHours.day_status = day_status;
+		await businessHours.save();
+		return res.status(200).json({
+			Status: 1,
+			message: "Business hours status updated successfully",
+		});
+	} catch (error) {
+		console.error("Error toggling business hours status:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
+};
+
 const addCategory = async (req, res) => {
 	try {
 		const user_id = req.userData.user_id;
@@ -787,28 +816,17 @@ const addItem = async (req, res) => {
 				},
 			},
 		});
-		console.log(">>>>>>>>>>>", users);
-		// const usersArray = [];
-		// const message = `A new item has been added`;
-		// const data = {
-		// 	item_id: item.item_id,
-		// 	notification_type: "New Item",
-		// };
 
-		// const notifications = users.map((user) => {
-		// 	usersArray.push(user.dataValues.user_id);
-		// 	return {
-		// 		notification_from: req.userData.user_id,
-		// 		notification_to: user.user_id,
-		// 		title: "New Item",
-		// 		notification_message: "A new item has been added",
-		// 		notification_type: "New Item",
-		// 	};
-		// });
-		// console.log(">>>>>>>>>>>>usersArray", usersArray);
-		// const created = await db.Notification.bulkCreate(notifications);
-		// await sendNotification(usersArray, message, data);
-		res.status(201).json({ Status: 1, message: "The Item added successfully" });
+		// Fetch the added item with images and ingredients
+		const addedItem = await db.Items.findByPk(item.item_id, {
+			include: [{ model: db.Item_Img }, { model: db.Ingrediant }],
+		});
+
+		res.status(201).json({
+			Status: 1,
+			message: "The Item added successfully",
+			item: addedItem,
+		});
 	} catch (error) {
 		console.error("Error adding item:", error);
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });
@@ -2918,6 +2936,7 @@ module.exports = {
 	StaffForgetPassword,
 	resetPassword,
 	businessHours,
+	toggleBusinessHoursStatus,
 
 	addCategory,
 	editCategory,
