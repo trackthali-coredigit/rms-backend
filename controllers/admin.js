@@ -492,7 +492,7 @@ const businessHours = async (req, res) => {
 				return res.status(201).json({
 					Status: 1,
 					message: "Business hours added/updated successfully for all days",
-					createdOrUpdatedBusinessHours,
+					businesshoursList: createdOrUpdatedBusinessHours,
 				});
 			case "is_create":
 				const BusinessHoursdata = await db.BusinessHours.create({
@@ -505,7 +505,7 @@ const businessHours = async (req, res) => {
 				return res.status(201).json({
 					Status: 1,
 					message: "Business hours added successfully",
-					BusinessHoursdata,
+					businesshoursList: BusinessHoursdata,
 				});
 			case "is_edit":
 				const editedData = await db.BusinessHours.update(
@@ -521,7 +521,7 @@ const businessHours = async (req, res) => {
 					return res.status(200).json({
 						Status: 0,
 						message: "Business hours not found or not updated",
-						editedData,
+						businesshoursList: editedData,
 					});
 				}
 			case "is_get":
