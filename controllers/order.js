@@ -370,8 +370,7 @@ const GetAllCurrentWaiterOrders = async (req, res) => {
 		if (!user) {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
-		const { page, order_status, order_type, bill_status, sort_by, sort_order } =
-			req.body;
+		const { page, order_status, order_type, bill_status, sort_by = "updatedAt", sort_order = "DESC", start_date, end_date } = req.query;
 		const pageSize = 20;
 		let currentPage = parseInt(page, 10) || 1;
 		if (currentPage < 1) currentPage = 1;
@@ -387,6 +386,21 @@ const GetAllCurrentWaiterOrders = async (req, res) => {
 		}
 		if (bill_status && bill_status !== "all") {
 			where.bill_status = bill_status;
+		}
+
+		// Add date range filtering (UTC format)
+		if (start_date || end_date) {
+			where.createdAt = {};
+			if (start_date) {
+				const startOfDay = new Date(start_date);
+				startOfDay.setUTCHours(0, 0, 0, 0);
+				where.createdAt[Op.gte] = startOfDay;
+			}
+			if (end_date) {
+				const endOfDay = new Date(end_date);
+				endOfDay.setUTCHours(23, 59, 59, 999);
+				where.createdAt[Op.lte] = endOfDay;
+			}
 		}
 
 		// Sorting
