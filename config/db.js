@@ -22,6 +22,7 @@ db.Waiter = require("../models/waiter")(sequelize, DataTypes, Model);
 db.Order = require("../models/order")(sequelize, DataTypes, Model);
 db.Order_Item = require("../models/order.item")(sequelize, DataTypes, Model);
 db.Contact_Us = require("../models/contact_us")(sequelize, DataTypes, Model);
+db.Contact_Info = require("../models/contact_info")(sequelize, DataTypes, Model);
 db.PromoCode = require("../models/promo_code")(sequelize, DataTypes, Model);
 db.Notification = require("../models/notification")(
 	sequelize,
@@ -244,6 +245,28 @@ db.Business.hasMany(db.Items, {
 	targetKey: "business_id",
 });
 db.Items.belongsTo(db.Business, {
+	foreignKey: "business_id",
+	sourceKey: "business_id",
+	targetKey: "business_id",
+});
+
+db.User.hasMany(db.Contact_Info, {
+	foreignKey: "user_id",
+	sourceKey: "user_id",
+	targetKey: "user_id",
+});
+db.Contact_Info.belongsTo(db.User, {
+	foreignKey: "user_id",
+	sourceKey: "user_id",
+	targetKey: "user_id",
+});
+
+db.Business.hasMany(db.Contact_Info, {
+	foreignKey: "business_id",
+	sourceKey: "business_id",
+	targetKey: "business_id",
+});
+db.Contact_Info.belongsTo(db.Business, {
 	foreignKey: "business_id",
 	sourceKey: "business_id",
 	targetKey: "business_id",
