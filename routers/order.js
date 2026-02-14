@@ -199,6 +199,18 @@ router.delete("/deleteorder/:order_id", authMiddleware, orders.DeleteOrder);
  *         schema:
  *           type: string
  *           enum: [ASC, DESC, asc, desc]
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Start date for filtering (ISO 8601 format)
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: End date for filtering (ISO 8601 format)
  *     responses:
  *       200:
  *         description: Orders fetched successfully
@@ -239,6 +251,14 @@ router.get(
 			.optional()
 			.isIn(["ASC", "DESC", "asc", "desc"])
 			.withMessage("sort_order must be ASC or DESC"),
+		check("start_date")
+			.optional()
+			.isISO8601()
+			.withMessage("start_date must be a valid ISO 8601 date"),
+		check("end_date")
+			.optional()
+			.isISO8601()
+			.withMessage("end_date must be a valid ISO 8601 date"),
 	],
 	validation,
 	orders.GetAllOrders
@@ -282,6 +302,18 @@ router.get(
  *         schema:
  *           type: string
  *           enum: [ASC, DESC, asc, desc]
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Start date for filtering (ISO 8601 format)
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: End date for filtering (ISO 8601 format)
  *     responses:
  *       200:
  *         description: Orders fetched successfully
@@ -322,6 +354,14 @@ router.get(
 			.optional()
 			.isIn(["ASC", "DESC", "asc", "desc"])
 			.withMessage("sort_order must be ASC or DESC"),
+		check("start_date")
+			.optional()
+			.isISO8601()
+			.withMessage("start_date must be a valid ISO 8601 date"),
+		check("end_date")
+			.optional()
+			.isISO8601()
+			.withMessage("end_date must be a valid ISO 8601 date"),
 	],
 	validation,
 	orders.GetAllCurrentWaiterOrders
@@ -431,6 +471,18 @@ router.get(
  *         schema:
  *           type: string
  *           enum: [ASC, DESC, asc, desc]
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Start date for filtering (ISO 8601 format)
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: End date for filtering (ISO 8601 format)
  *     responses:
  *       200:
  *         description: Orders fetched successfully
