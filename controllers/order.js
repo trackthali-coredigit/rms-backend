@@ -912,6 +912,50 @@ const MakeOrderItem = async (req, res) => {
 		});
 		console.log("New Order Item Created:", newOrderItem);
 
+		// Get all order items for this order
+		const orderItems = await db.Order_Item.findAll({
+			where: { order_id, business_id },
+		});
+
+		// Calculate Sub Total
+		let sub_total = 0;
+		orderItems.forEach((item) => {
+			sub_total += Number(item.price) * Number(item.quantity);
+		});
+
+		// Example Discount Logic (Modify if needed)
+		let discount = 0;
+		if (sub_total > 1000) {
+			discount = sub_total * 0.1;
+		}
+
+		// Fetch tax percentage from tbl_business
+		const business = await db.Business.findOne({ where: { business_id } });
+		let taxPercent = 0.18; // Default
+		if (business && business.tax) {
+			taxPercent = Number(business.tax) / 100;
+		}
+
+		// Calculate Tax
+		const taxable_amount = sub_total - discount;
+		const taxes = taxable_amount * taxPercent;
+
+		// Final Total
+		const total_price = taxable_amount + taxes;
+
+		// Update Order Table
+		await db.Order.update(
+			{
+				sub_total: sub_total,
+				discount: discount,
+				taxes: taxes,
+				total_price: total_price,
+			},
+			{
+				where: { order_id, business_id },
+			}
+		);
+
 		// Emit socket event for new order item
 		try {
 			await emitToSockets(current_user_id, "order_item_created", {
