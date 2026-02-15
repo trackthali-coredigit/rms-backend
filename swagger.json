@@ -801,6 +801,10 @@
                   "price": {
                     "type": "number"
                   },
+                  "discount": {
+                    "type": "number",
+                    "description": "Optional discount for the item"
+                  },
                   "stock": {
                     "type": "integer"
                   },
@@ -853,6 +857,10 @@
                   },
                   "price": {
                     "type": "number"
+                  },
+                  "discount": {
+                    "type": "number",
+                    "description": "Optional discount for the item"
                   },
                   "stock": {
                     "type": "integer"
@@ -2042,6 +2050,26 @@
                 "desc"
               ]
             }
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false,
+            "description": "Start date for filtering orders (YYYY-MM-DD)"
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false,
+            "description": "End date for filtering orders (YYYY-MM-DD)"
           }
         ],
         "responses": {

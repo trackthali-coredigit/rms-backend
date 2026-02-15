@@ -917,16 +917,25 @@ const MakeOrderItem = async (req, res) => {
 			where: { order_id, business_id },
 		});
 
-		// Calculate Sub Total
+		// Calculate Sub Total and Discount based on item discount
 		let sub_total = 0;
-		orderItems.forEach((item) => {
-			sub_total += Number(item.price) * Number(item.quantity);
-		});
-
-		// Example Discount Logic (Modify if needed)
 		let discount = 0;
-		if (sub_total > 1000) {
-			discount = sub_total * 0.1;
+		for (const item of orderItems) {
+			const itemTotal = Number(item.price) * Number(item.quantity);
+			sub_total += itemTotal;
+			// Fetch item discount from tbl_item (items.js model)
+			let itemDiscount = 0;
+			   if (item.item_id) {
+				   const itemData = await db.Items.findOne({ where: { item_id: item.item_id, business_id, is_deleted : false } });
+				   if (itemData && itemData.discount && !isNaN(itemData.discount)) {
+					   // If discount is a percentage (e.g., 10 for 10%), treat as percent
+					   // If discount is a fixed value, treat as fixed
+					   // Here, assume discount is a fixed value per item (as per your model)
+					   itemDiscount = Number(itemData.discount) || 0;
+				   }
+			   }
+			// Apply item discount per quantity
+			discount += itemDiscount * Number(item.quantity);
 		}
 
 		// Fetch tax percentage from tbl_business
