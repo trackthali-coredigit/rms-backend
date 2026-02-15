@@ -297,7 +297,7 @@ const waiterAssignedTableList = async (req, res) => {
 		if (req.userData.role != "waiter") {
 			return res.status(404).json({ Status: 0, message: "waiter not found" });
 		}
-		const { page } = req.body;
+		const { page } = req.query;
 		const pageSize = 20;
 		let currentPage = parseInt(page, 10) || 1;
 		if (currentPage < 1) currentPage = 1;
