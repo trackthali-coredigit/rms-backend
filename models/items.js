@@ -31,6 +31,11 @@ module.exports = (sequelize, DataTypes, Model) => {
       stock: {
         type: DataTypes.BIGINT,
       },
+       discount: {
+         type: DataTypes.DOUBLE,
+         defaultValue: 0,
+         allowNull: true,
+       },
       is_deleted: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,

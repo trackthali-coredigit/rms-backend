@@ -672,7 +672,7 @@ const addItem = async (req, res) => {
 		if (!user) {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
-		let { item_name, price, stock, ingredients, category_id } = req.body;
+		let { item_name, price, stock, ingredients, category_id, discount = 0 } = req.body;
 		const images = req.files.item_image;
 		// Parse ingredients if it is a string (e.g., from form-data)
 		if (ingredients && typeof ingredients === "string") {
@@ -700,6 +700,7 @@ const addItem = async (req, res) => {
 			item_name,
 			price,
 			stock,
+			discount,
 		});
 
 		// Image Validation
@@ -809,7 +810,7 @@ const editItem = async (req, res) => {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
 
-		let { item_id, item_name, price, stock, ingredients } = req.body;
+		let { item_id, item_name, price, stock, ingredients, discount = 0 } = req.body;
 		if (ingredients && typeof ingredients === "string") {
 			try {
 				// Replace HTML entities for quotes if present
@@ -834,10 +835,12 @@ const editItem = async (req, res) => {
 		if (item_name) item.item_name = req.body.item_name;
 		if (price) item.price = req.body.price;
 		if (stock) item.stock = req.body.stock;
+		if (discount) item.discount = discount;
 		await item.update({
 			item_name,
 			price,
 			stock,
+			discount: discount !== undefined ? discount : item.discount,
 		});
 		if (req.files != undefined && req.files.item_image) {
 			// Image Validation

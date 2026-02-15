@@ -499,6 +499,9 @@ router.get(
  *                 type: string
  *               price:
  *                 type: number
+ *               discount:
+ *                 type: number
+ *                 description: Optional discount for the item
  *               stock:
  *                 type: integer
  *               ingredients:
@@ -541,6 +544,12 @@ router.post(
 			.isFloat({ min: 0, max: 1000000 })
 			.withMessage(
 				"Price must be a non-negative number less than or equal to 1000000"
+			),
+		check("discount")
+			.optional()
+			.isFloat({ min: 0, max: 1000000 })
+			.withMessage(
+				"Discount must be a non-negative number less than or equal to 1000000"
 			),
 		check("stock")
 			.notEmpty()
@@ -587,6 +596,9 @@ router.post(
  *                 type: string
  *               price:
  *                 type: number
+ *               discount:
+ *                 type: number
+ *                 description: Optional discount for the item
  *               stock:
  *                 type: integer
  *               ingredients:
@@ -619,6 +631,12 @@ router.put(
 			.isFloat({ min: 0, max: 1000000 })
 			.withMessage(
 				"Price must be a non-negative number less than or equal to 1000000"
+			),
+		check("discount")
+			.optional()
+			.isFloat({ min: 0, max: 1000000 })
+			.withMessage(
+				"Discount must be a non-negative number less than or equal to 1000000"
 			),
 		check("stock")
 			.optional()
