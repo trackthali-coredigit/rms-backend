@@ -757,7 +757,7 @@ router.put(
  *             properties:
  *               order_item_status:
  *                 type: string
- *                 enum: [to_do, in_making, ready_to_serve, served, cancelled]
+ *                 enum: [to_do, in_progress, in_making, ready_to_serve, served, cancelled, complete]
  *     responses:
  *       200:
  *         description: Order item status updated successfully
