@@ -2392,7 +2392,7 @@
         },
         "responses": {
           "200": {
-            "description": "Order item updated successfully"
+            "description": "Order item updated successfully2"
           },
           "404": {
             "description": "Order item not found"
