@@ -769,7 +769,7 @@ router.put(
 	authMiddleware,
 	[
 		check("order_item_status")
-			.isIn(["to_do", "in_progress", "in_making", "ready_to_serve", "served", "cancelled"])
+			.isIn(["to_do", "in_progress", "in_making", "ready_to_serve", "served", "cancelled", "complete"])
 			.withMessage(
 				"order_item_status must be one of to_do, in_making, ready_to_serve, served, cancelled"
 			),
