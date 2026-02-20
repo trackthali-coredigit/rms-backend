@@ -2377,10 +2377,12 @@
                     "type": "string",
                     "enum": [
                       "to_do",
+                      "in_progress",
                       "in_making",
                       "ready_to_serve",
                       "served",
-                      "cancelled"
+                      "cancelled",
+                      "complete"
                     ]
                   }
                 }
