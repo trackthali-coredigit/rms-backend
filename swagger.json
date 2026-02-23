@@ -2382,7 +2382,7 @@
                       "ready_to_serve",
                       "served",
                       "cancelled",
-                      "complete"
+                      "completed"
                     ]
                   }
                 }
@@ -2589,7 +2589,7 @@
                   "order_status": {
                     "type": "string",
                     "enum": [
-                      "complete"
+                      "completed"
                     ]
                   }
                 }

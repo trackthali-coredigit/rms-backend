@@ -757,7 +757,7 @@ router.put(
  *             properties:
  *               order_item_status:
  *                 type: string
- *                 enum: [to_do, in_progress, in_making, ready_to_serve, served, cancelled, complete]
+ *                 enum: [to_do, in_progress, in_making, ready_to_serve, served, cancelled, completed]
  *     responses:
  *       200:
  *         description: Order item status updated successfully
@@ -769,9 +769,9 @@ router.put(
 	authMiddleware,
 	[
 		check("order_item_status")
-			.isIn(["to_do", "in_progress", "in_making", "ready_to_serve", "served", "cancelled", "complete"])
+			.isIn(["to_do", "in_progress", "in_making", "ready_to_serve", "served", "cancelled", "completed"])
 			.withMessage(
-				"order_item_status must be one of to_do, in_making, ready_to_serve, served, cancelled"
+				"order_item_status must be one of to_do, in_making, ready_to_serve, served, cancelled, completed"
 			),
 	],
 	validation,
