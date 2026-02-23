@@ -1221,12 +1221,12 @@ const WaiterOrderComplete = async (req, res) => {
 		if (!order) {
 			return res.status(404).json({ Status: 0, message: "Order Not Found" });
 		}
-		if (order_status !== "complete") {
+		if (order_status !== "completed") {
 			return res
 				.status(400)
 				.json({ Status: 0, message: "Invalid order status update" });
 		}
-		order.order_status = "complete";
+		order.order_status = "completed";
 		// Update all associated order items to 'served' if they are not cancelled
 		await db.Order_Item.update(
 			{ order_item_status: "served" },

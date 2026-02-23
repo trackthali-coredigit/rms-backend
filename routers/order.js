@@ -818,7 +818,7 @@ router.get("/barista/orderitems", authMiddleware, orders.GetBaristaOrderItems);
  *             properties:
  *               order_status:
  *                 type: string
- *                 enum: [complete]
+ *                 enum: [completed]
  *     responses:
  *       200:
  *         description: Order marked as complete
@@ -830,7 +830,7 @@ router.put(
 	authMiddleware,
 	[
 		check("order_status")
-			.isIn(["complete"])
+			.isIn(["completed"])
 			.withMessage("order_status must be complete"),
 	],
 	validation,
