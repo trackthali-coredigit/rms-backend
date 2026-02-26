@@ -103,6 +103,15 @@ async function fixForeignKeyConstraints() {
 					MODIFY COLUMN ingrediant_id INT(11) DEFAULT NULL
 				`);
 				console.log("✅ Updated ingrediant_id column type to INTEGER");
+				
+
+				await db.sequelize.query(`
+					ALTER TABLE tbl_order
+					MODIFY COLUMN order_status 
+					ENUM('to_do', 'in_progress', 'completed', 'cancelled')
+					DEFAULT 'to_do';
+				`);
+				console.log("✅ Updated order_status complete to completed in ENUM");
 			}
 		}
 
