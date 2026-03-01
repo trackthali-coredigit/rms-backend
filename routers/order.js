@@ -609,6 +609,17 @@ router.post(
 		check("quantity").isInt().withMessage("quantity must be an integer"),
 		check("price").isFloat().withMessage("price must be a number"),
 		check("item_name").isString().withMessage("item_name must be a string"),
+		check("ingrediant_id")
+			.optional({ nullable: true })
+			.isString().withMessage("ingrediant_id must be a string")
+			.custom((value) => {
+				if (!value) return true;
+				const ids = value.split(",").map((id) => id.trim()).filter((id) => id);
+				if (!ids.every((id) => /^\d+$/.test(id))) {
+					throw new Error("ingrediant_id must be a comma-separated list of numbers");
+				}
+				return true;
+			}),
 	],
 	validation,
 	orders.MakeOrderItem
