@@ -1233,6 +1233,17 @@ const WaiterOrderComplete = async (req, res) => {
 			{ where: { order_id, order_item_status: { [Op.ne]: "cancelled" } } }
 		);
 		await order.save();
+		// Release table if dine-in order
+		if (order.order_type === "dine_in" && order.table_id) {
+			try {
+				await db.Tables.update(
+					{ status: "available" },
+					{ where: { table_id: order.table_id, business_id } }
+				);
+			} catch (e) {
+				console.error("Error releasing table after order completion:", e);
+			}
+		}
 		// Emit socket event for waiter order complete
 		try {
 			await emitToSockets(current_user_id, "waiter_order_completed", {
