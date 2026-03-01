@@ -2317,6 +2317,10 @@
                   "item_name": {
                     "type": "string"
                   }
+                  "ingrediant_id": {
+                    "type": "string",
+                    "description": "Comma-separated list of ingredient IDs (e.g. '1,2,3')"
+                  }
                 }
               }
             }
