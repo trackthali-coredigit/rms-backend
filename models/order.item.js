@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
 				allowNull: false,
 			},
 			ingrediant_id: {
-				type: DataTypes.STRING,
+				type: DataTypes.STRING(255),
 				defaultValue: null,
 			},
 			business_id: {

@@ -29,7 +29,7 @@ async function updateDatabaseSchema() {
 		console.log("🎉 Schema update completed successfully!");
 		console.log("📋 Updates applied:");
 		console.log("   - Fixed foreign key constraint issues");
-		console.log("   - Updated ingrediant_id column type consistency");
+		console.log("   - Updated ingrediant_id column type to VARCHAR(255)");
 		console.log("   - Added missing OTP columns if needed");
 	} catch (error) {
 		console.error("❌ Error updating database schema:", error);
@@ -76,42 +76,39 @@ async function fixForeignKeyConstraints() {
 
 		// Check if the column type needs to be changed
 		const [results] = await db.sequelize.query(`
-			SELECT DATA_TYPE, IS_NULLABLE 
-			FROM INFORMATION_SCHEMA.COLUMNS 
-			WHERE TABLE_NAME = 'tbl_order_items' 
+			SELECT DATA_TYPE, IS_NULLABLE
+			FROM INFORMATION_SCHEMA.COLUMNS
+			WHERE TABLE_NAME = 'tbl_order_items'
 			AND COLUMN_NAME = 'ingrediant_id'
 		`);
 
 		if (results.length > 0) {
 			const columnInfo = results[0];
-			if (
-				columnInfo.DATA_TYPE === "varchar" ||
-				columnInfo.DATA_TYPE === "text"
-			) {
-				console.log("🔄 Converting ingrediant_id from STRING to INTEGER...");
+			if (columnInfo.DATA_TYPE === "int") {
+				console.log("🔄 Converting ingrediant_id from INTEGER to VARCHAR(255)...");
 
 				// Update any existing data to handle the type conversion
 				await db.sequelize.query(`
-					UPDATE tbl_order_items 
-					SET ingrediant_id = NULL 
-					WHERE ingrediant_id = '' OR ingrediant_id IS NULL OR ingrediant_id = '0'
+					UPDATE tbl_order_items
+					SET ingrediant_id = NULL
+					WHERE ingrediant_id = 0 OR ingrediant_id IS NULL
 				`);
 
 				// Change column type
 				await db.sequelize.query(`
-					ALTER TABLE tbl_order_items 
-					MODIFY COLUMN ingrediant_id INT(11) DEFAULT NULL
+					ALTER TABLE tbl_order_items
+					MODIFY COLUMN ingrediant_id VARCHAR(255) DEFAULT NULL
 				`);
-				console.log("✅ Updated ingrediant_id column type to INTEGER");
-				
+				console.log("✅ Updated ingrediant_id column type to VARCHAR(255)");
+			} else if (columnInfo.DATA_TYPE === "varchar") {
+				console.log("🔄 Ensuring ingrediant_id is VARCHAR(255)...");
 
+				// Ensure it's VARCHAR(255) specifically
 				await db.sequelize.query(`
-					ALTER TABLE tbl_order
-					MODIFY COLUMN order_status 
-					ENUM('to_do', 'in_progress', 'completed', 'cancelled')
-					DEFAULT 'to_do';
+					ALTER TABLE tbl_order_items
+					MODIFY COLUMN ingrediant_id VARCHAR(255) DEFAULT NULL
 				`);
-				console.log("✅ Updated order_status complete to completed in ENUM");
+				console.log("✅ Confirmed ingrediant_id is VARCHAR(255)");
 			}
 		}
 
