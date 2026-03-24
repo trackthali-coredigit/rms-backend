@@ -54,24 +54,25 @@ async function fixForeignKeyConstraints() {
 	console.log("🔧 Fixing foreign key constraints...");
 
 	try {
-		// Drop existing foreign key constraint if it exists
-		await db.sequelize.query(`
-			SELECT CONSTRAINT_NAME 
-			FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-			WHERE TABLE_NAME = 'tbl_order_items' 
-			AND COLUMN_NAME = 'ingrediant_id' 
-			AND CONSTRAINT_NAME LIKE '%_ibfk_%'
+		// Identify and drop foreign keys on tbl_order_items
+		const [fkConstraints] = await db.sequelize.query(`
+			SELECT CONSTRAINT_NAME
+			FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+			WHERE TABLE_NAME = 'tbl_order_items'
+			AND REFERENCED_TABLE_NAME IS NOT NULL
 		`);
 
-		// Drop the problematic foreign key constraint
-		try {
-			await db.sequelize.query(`
-				ALTER TABLE tbl_order_items 
-				DROP FOREIGN KEY tbl_order_items_ibfk_1
-			`);
-			console.log("✅ Dropped existing foreign key constraint");
-		} catch (dropError) {
-			console.log("ℹ️  No existing foreign key to drop or already dropped");
+		if (fkConstraints.length > 0) {
+			for (const fk of fkConstraints) {
+				try {
+					await db.sequelize.query("ALTER TABLE tbl_order_items DROP FOREIGN KEY `" + fk.CONSTRAINT_NAME + "`");
+					console.log(`✅ Dropped foreign key constraint ${fk.CONSTRAINT_NAME}`);
+				} catch (dropError) {
+					console.log(`⚠️  Failed to drop constraint ${fk.CONSTRAINT_NAME}:`, dropError.message);
+				}
+			}
+		} else {
+			console.log("ℹ️  No foreign key constraints found on tbl_order_items");
 		}
 
 		// Check if the column type needs to be changed
