@@ -17,7 +17,7 @@ const getRailwayUrl = () => {
 	}
 
 	// Fallback to actual Railway deployment URL
-	return `https://rms-backend-production-a81b.up.railway.app`;
+	return `http://16.171.29.129:9000`;
 };
 
 const getServerUrl = () => {

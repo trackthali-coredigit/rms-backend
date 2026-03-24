@@ -20,7 +20,7 @@ const options = {
 				description: "Local Development Server",
 			},
 			{
-				url: "https://rms-backend-production-a81b.up.railway.app",
+				url: "http://16.171.29.129:9000",
 				description: "Railway Production (Fallback)",
 			},
 		],
