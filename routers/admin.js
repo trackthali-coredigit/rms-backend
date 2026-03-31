@@ -281,6 +281,8 @@ router.put(
  *             properties:
  *               emailOrUsername:
  *                 type: string
+ *               otp:
+ *                 type: string
  *               newPassword:
  *                 type: string
  *     responses:
@@ -296,6 +298,12 @@ router.post(
 			.not()
 			.isEmpty()
 			.withMessage("Email or username is required")
+			.trim()
+			.escape(),
+		check("otp")
+			.not()
+			.isEmpty()
+			.withMessage("OTP is required")
 			.trim()
 			.escape(),
 		check("newPassword")

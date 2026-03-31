@@ -334,7 +334,7 @@ const StaffForgetPassword = async (req, res) => {
 };
 const resetPassword = async (req, res) => {
 	try {
-		const { emailOrUsername, newPassword } = req.body;
+		const { emailOrUsername, otp, newPassword } = req.body;
 
 		let user;
 		if (!!emailOrUsername) {
@@ -354,6 +354,20 @@ const resetPassword = async (req, res) => {
 		}
 		if (!user) {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+		}
+
+		if (user.otp != otp) {
+			return res.status(200).json({ Status: 0, message: "Invalid OTP" });
+		}
+
+		// Check if OTP has expired
+		const currentTime = new Date();
+		const otpCreationTime = new Date(user.otp_created_at);
+		const otpExpirationTime = new Date(
+			otpCreationTime.getTime() + 5 * 60 * 1000
+		); // Assuming OTP expires in 5 minutes
+		if (currentTime > otpExpirationTime) {
+			return res.status(200).json({ Status: 0, message: "OTP has expired" });
 		}
 
 		// Update user's password
