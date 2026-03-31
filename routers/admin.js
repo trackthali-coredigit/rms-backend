@@ -134,6 +134,24 @@ router.post(
 			.withMessage("Role is required")
 			.trim()
 			.escape(),
+		check("device_id")
+			.not()
+			.isEmpty()
+			.withMessage("Device ID is required")
+			.trim()
+			.escape(),
+		check("device_type")
+			.not()
+			.isEmpty()
+			.withMessage("Device type is required")
+			.trim()
+			.escape(),
+		check("device_token")
+			.not()
+			.isEmpty()
+			.withMessage("Device token is required")
+			.trim()
+			.escape(),
 	],
 	validation,
 	admin.otp_verify
