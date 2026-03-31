@@ -108,15 +108,46 @@ router.post(
  *             properties:
  *               emailOrUsername:
  *                 type: string
+ *                 description: User's email or username
  *               otp:
  *                 type: string
+ *                 description: OTP code sent to user's email
  *               role:
  *                 type: string
+ *                 description: User role (admin or user)
+ *               device_id:
+ *                 type: string
+ *                 description: Unique device identifier
+ *               device_type:
+ *                 type: string
+ *                 description: Type of device (e.g., ios, android, web)
+ *               device_token:
+ *                 type: string
+ *                 description: Device push notification token
  *     responses:
  *       200:
- *         description: OTP verified
+ *         description: OTP verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 Status:
+ *                   type: integer
+ *                   example: 1
+ *                 message:
+ *                   type: string
+ *                   example: "Admin sign-In successfully"
+ *                 token:
+ *                   type: string
+ *                   description: JWT token for authentication
+ *                 user_id:
+ *                   type: integer
+ *                   description: User ID
  *       400:
  *         description: Validation error
+ *       404:
+ *         description: User not found
  */
 router.post(
 	"/otp_verify",
