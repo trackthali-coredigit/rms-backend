@@ -490,6 +490,15 @@
                   },
                   "role": {
                     "type": "string"
+                  },
+                  "device_id": {
+                    "type": "string"
+                  },
+                  "device_type": {
+                    "type": "string"
+                  },
+                  "device_token": {
+                    "type": "string"
                   }
                 }
               }
