@@ -17,6 +17,16 @@ const signin = async (req, res) => {
 			device_token,
 			role,
 		} = req.body;
+
+		if (!emailOrUsername || !password || !role || !device_id || !device_token || !device_token) {
+			return res.status(400).json({
+				Status: 0,
+				status_code: 400,
+				message: "Required fields missing",
+				data: null
+			});
+		}
+
 		let user = await db.User.findOne({
 			where: {
 				[Op.or]: [{ email: emailOrUsername }, { username: emailOrUsername }],
@@ -25,9 +35,12 @@ const signin = async (req, res) => {
 			},
 		});
 		if (!user)
-			return res
-				.status(200)
-				.json({ Status: 0, message: "The User Not Found or not verified" });
+			return res.status(404).json({
+				Status: 0,
+				status_code: 404,
+				message: "The User Not Found or not verified",
+				data: null
+			});
 
 		const passwordMatch = await bcrypt.compare(password, user.password);
 		if (!passwordMatch)
@@ -56,8 +69,11 @@ const signin = async (req, res) => {
 			return res.status(200).json({
 				Status: 1,
 				message: "OTP sent to your registered email successfully",
-				otp: otp,
-				user_id: user.user_id,
+				status_code: 200,
+				data: {
+					otp: otp,
+					user_id: user.user_id,
+				}
 			});
 		}
 		deviceDetails.tokenVersion += 1;
@@ -86,9 +102,12 @@ const signin = async (req, res) => {
 			return res.status(200).json({
 				Status: 2,
 				message: "Please verify your Account First",
-				token,
-				otp,
-				user_id: user.user_id,
+				status_code: 200,
+				data: {
+					token: token,
+					otp,
+					user_id: user.user_id,
+				}
 			});
 		}
 
@@ -96,17 +115,24 @@ const signin = async (req, res) => {
 			return res.status(200).json({
 				Status: 3,
 				message: "Please setup your Account First",
-				token,
-				user_id: user.user_id,
+				status_code: 200,
+				data: {
+					token: token,
+					user_id: user.user_id,
+				}
 			});
 		res.status(200).json({
 			Status: 1,
 			message: "Sign-in successfully",
-			token,
-			user_id: user.user_id,
+			status_code: 200,
+			data: {
+				token: token,
+				user_id: user.user_id,
+			}
 		});
 	} catch (error) {
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		console.log(error);
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error", data: null });
 	}
 };
 const otp_verify = async (req, res) => {
@@ -130,10 +156,10 @@ const otp_verify = async (req, res) => {
 			});
 		}
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		if (user.otp != otp) {
-			return res.status(200).json({ Status: 0, message: "Invalid OTP" });
+			return res.status(200).json({ Status: 0, status_code: 200, message: "Invalid OTP" });
 		}
 
 		// Check if OTP has expired
@@ -143,7 +169,7 @@ const otp_verify = async (req, res) => {
 			otpCreationTime.getTime() + 1 * 60 * 1000
 		); // Assuming OTP expires in 5 minutes
 		if (currentTime > otpExpirationTime) {
-			return res.status(200).json({ Status: 0, message: "OTP has expired" });
+			return res.status(200).json({ Status: 0, status_code: 200, message: "OTP has expired" });
 		}
 
 		await db.User.update(
@@ -185,8 +211,11 @@ const otp_verify = async (req, res) => {
 			return res.status(200).json({
 				Status: 1,
 				message: "Admin sign-In successfully",
-				token: token,
-				user_id: user.user_id,
+				status_code: 200,
+				data: {
+					token: token,
+					user_id: user.user_id,
+				}
 			});
 		}
 		if (user.role === "user") {
@@ -223,18 +252,24 @@ const otp_verify = async (req, res) => {
 			return res.status(200).json({
 				Status: 1,
 				message: "OTP verified successfully",
-				token: token,
-				user_id: user.user_id,
+				status_code: 200,
+				data: {
+					token: token,
+					user_id: user.user_id,
+				}
 			});
 		}
 		res.status(200).json({
 			Status: 1,
 			message: "User verified successfully",
-			user_id: user.user_id,
+			status_code: 200,
+			data: {
+				user_id: user.user_id,
+			}
 		});
 	} catch (error) {
 		console.error("Error verifying OTP:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 const forgetPassword = async (req, res) => {
@@ -1048,7 +1083,11 @@ const getCategoryList = async (req, res) => {
 			const token = req.headers["authorization"].split(" ")[1];
 
 			if (!token) {
-				return res.status(401).json({ message: "Authentication failed " });
+				return res.status(401).json({
+					Status: 0,
+					status_code: 401,
+					message: "Authentication failed"
+				});
 			}
 
 			const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
@@ -1059,7 +1098,11 @@ const getCategoryList = async (req, res) => {
 				!tokens ||
 				tokens.tokenVersion !== decodedToken.tokenVersion
 			) {
-				return res.status(401).json({ error: "Invalid token" });
+				return res.status(401).json({
+					Status: 0,
+					status_code: 401,
+					message: "Invalid token"
+				});
 			}
 			req.userData = user;
 			req.tokenData = tokens;
@@ -1082,24 +1125,30 @@ const getCategoryList = async (req, res) => {
 				},
 			});
 			if (!userx) {
-				return res
-					.status(404)
-					.json({ Status: 0, message: "The User Not Found" });
+				return res.status(404).json({
+					Status: 0,
+					status_code: 404,
+					message: "The User Not Found"
+				});
 			}
 			whereClause = { business_id: user.business_id };
 			if (user.role === "user") {
 				if (!req.body.business_id) {
-					return res
-						.status(400)
-						.json({ Status: 0, message: "business_id require for user" });
+					return res.status(400).json({
+						Status: 0,
+						status_code: 400,
+						message: "business_id require for user"
+					});
 				}
 				whereClause = { business_id };
 			}
 		} else {
 			if (!req.body.business_id) {
-				return res
-					.status(400)
-					.json({ Status: 0, message: "business_id require for user" });
+				return res.status(400).json({
+					Status: 0,
+					status_code: 400,
+					message: "business_id require for user"
+				});
 			}
 			whereClause = { business_id };
 		}
@@ -1121,14 +1170,19 @@ const getCategoryList = async (req, res) => {
 		// Return the list of categories in the response
 		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "The Category get Succesfully",
 			current_page: page,
 			total_pages: totalPages,
-			categories: rows,
+			data: rows,
 		});
 	} catch (error) {
 		console.error("Error fetching category list:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({
+			Status: 0,
+			status_code: 500,
+			message: "Internal Server Error"
+		});
 	}
 };
 const getItemList = async (req, res) => {
@@ -1143,7 +1197,11 @@ const getItemList = async (req, res) => {
 			const token = req.headers["authorization"].split(" ")[1];
 
 			if (!token) {
-				return res.status(401).json({ message: "Authentication failed " });
+				return res.status(401).json({
+					Status: 0,
+					status_code: 401,
+					message: "Authentication failed"
+				});
 			}
 
 			const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
@@ -1154,7 +1212,11 @@ const getItemList = async (req, res) => {
 				!tokens ||
 				tokens.tokenVersion !== decodedToken.tokenVersion
 			) {
-				return res.status(401).json({ error: "Invalid token" });
+				return res.status(401).json({
+					Status: 0,
+					status_code: 401,
+					message: "Invalid token"
+				});
 			}
 			req.userData = user;
 			req.tokenData = tokens;
@@ -1177,24 +1239,30 @@ const getItemList = async (req, res) => {
 				},
 			});
 			if (!userx) {
-				return res
-					.status(404)
-					.json({ Status: 0, message: "The User Not Found" });
+				return res.status(404).json({
+					Status: 0,
+					status_code: 404,
+					message: "The User Not Found"
+				});
 			}
 			whereClause = { business_id: user.business_id };
 			if (user.role === "user") {
 				if (!req.body.business_id) {
-					return res
-						.status(400)
-						.json({ Status: 0, message: "business_id require for user" });
+					return res.status(400).json({
+						Status: 0,
+						status_code: 400,
+						message: "business_id require for user"
+					});
 				}
 				whereClause = { business_id };
 			}
 		} else {
 			if (!req.body.business_id) {
-				return res
-					.status(400)
-					.json({ Status: 0, message: "business_id require for user" });
+				return res.status(400).json({
+					Status: 0,
+					status_code: 400,
+					message: "business_id require for user"
+				});
 			}
 			whereClause = { business_id };
 		}
@@ -1231,9 +1299,20 @@ const getItemList = async (req, res) => {
 			limit: pageSize,
 			offset: offset,
 		});
+
+		if (rows.length === 0) {
+			return res.status(404).json({
+				Status: 0,
+				status_code: 404,
+				message: "Items not found.",
+				data: [],
+			});
+		}
+
 		const totalPages = Math.ceil(count / pageSize);
 		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "The ItemList get succesfully",
 			current_page: page,
 			total_pages: totalPages,
@@ -1520,7 +1599,7 @@ const editStaffProfile = async (req, res) => {
 	}
 };
 const deleteStaff = async (req, res) => {
-	try {
+	// try {
 		const user_id = req.userData.user_id;
 		const user = req.userData;
 		// const user = await db.User.findOne({
@@ -1595,10 +1674,10 @@ const deleteStaff = async (req, res) => {
 		res
 			.status(200)
 			.json({ Status: 1, message: "The Staff member deleted successfully" });
-	} catch (error) {
-		console.error("Error deleting staff member:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
-	}
+	// } catch (error) {
+	// 	console.error("Error deleting staff member:", error);
+	// 	res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	// }
 };
 
 const addTable = async (req, res) => {
@@ -2313,7 +2392,16 @@ const notificationList = async (req, res) => {
 
 const getProfileDetails = async (req, res) => {
 	try {
-		const user_id = req.userData.user_id;
+		const user_id = req.query.user_id;
+
+		if (!user_id) {
+			return res.status(400).json({
+				Status: 0,
+				status_code: 400,
+				message: "user id is required.",
+				data: null,
+			})
+		}
 
 		// Find the user profile details
 		const userProfile = await db.User.findOne({
@@ -2327,9 +2415,12 @@ const getProfileDetails = async (req, res) => {
 		});
 
 		if (!userProfile) {
-			return res
-				.status(404)
-				.json({ Status: 0, message: "The User profile not found" });
+			return res.status(404).json({
+				Status: 0,
+				status_code: 404,
+				message: "The User profile not found",
+				data: null
+			});
 		}
 
 		let notificationCount = await db.Notification.count({
@@ -2344,12 +2435,20 @@ const getProfileDetails = async (req, res) => {
 		res.status(200).json({
 			Status: 1,
 			message: "The User profile details retrieved successfully",
-			userProfile,
-			notificationCount,
+			status_code: 200,
+			data: {
+				user_data: userProfile,
+				notification_count: notificationCount,
+			}
 		});
 	} catch (error) {
 		console.error("Error fetching user profile:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({
+			Status: 0,
+			message: "Internal Server Error " + error.toString(),
+			status_code: 500,
+			data: null
+		});
 	}
 };
 const getBusinessProfile = async (req, res) => {

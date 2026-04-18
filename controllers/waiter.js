@@ -295,7 +295,7 @@ const waiterAssignedTableList = async (req, res) => {
 		const user_id = req.userData.user_id;
 
 		if (req.userData.role != "waiter") {
-			return res.status(404).json({ Status: 0, message: "waiter not found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "waiter not found" });
 		}
 		const { page } = req.query;
 		const pageSize = 20;
@@ -369,14 +369,15 @@ const waiterAssignedTableList = async (req, res) => {
 
 		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "WaiterAssignedTableList get successfully",
 			current_page: currentPage,
 			total_pages: totalPages,
-			tables: rows,
+			data: rows,
 		});
 	} catch (error) {
 		console.error("Error fetching waiter assigned table list:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0,status_code: 500, message: "Internal Server Error" });
 	}
 };
 

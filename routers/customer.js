@@ -10,7 +10,7 @@ const admin = require("../controllers/admin");
 let validation = (req, res, next) => {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		return res.status(400).json({ errors: errors.array() });
+		return res.status(400).json({ Status: 0, status_code: 400, message: errors.array() });
 	}
 	next();
 };
@@ -144,6 +144,12 @@ router.post(
 	validation,
 	authMiddleware,
 	customer_routes.addCustomer
+);
+
+router.delete(
+	"/customer/delete",
+	authMiddleware,
+	customer_routes.deleteCustomer
 );
 
 module.exports = router;

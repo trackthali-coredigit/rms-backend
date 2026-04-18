@@ -9,7 +9,7 @@ const fs = require("fs");
 let validation = (req, res, next) => {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		return res.status(400).json({ errors: errors.array() });
+		return res.status(400).json({ status: 0, status_code: 400, message: "Something want wrong!", errors: errors.array() });
 	}
 	next();
 };
@@ -48,51 +48,7 @@ const admin = require("../controllers/admin");
  *         description: Validation error
  */
 
-router.post(
-	"/signin",
-	[
-		check("emailOrUsername")
-			.not()
-			.isEmpty()
-			.withMessage("Email or username is required")
-			.trim()
-			.escape(),
-		check("password")
-			.not()
-			.isEmpty()
-			.withMessage("Password is required")
-			.isLength({ min: 8 })
-			.withMessage("Password must be at least 8 characters long")
-			.trim()
-			.escape(),
-		check("device_id")
-			.not()
-			.isEmpty()
-			.withMessage("Device ID is required")
-			.trim()
-			.escape(),
-		check("device_type")
-			.not()
-			.isEmpty()
-			.withMessage("Device type is required")
-			.trim()
-			.escape(),
-		check("device_token")
-			.not()
-			.isEmpty()
-			.withMessage("Device token is required")
-			.trim()
-			.escape(),
-		check("role")
-			.not()
-			.isEmpty()
-			.withMessage("Role is required")
-			.trim()
-			.escape(),
-	],
-	validation,
-	admin.signin
-);
+router.post("/signin", admin.signin);
 /**
  * @swagger
  * /otp_verify:
@@ -528,12 +484,7 @@ router.delete(
  *         description: Validation error
  */
 
-router.get(
-	"/getCategoryList",
-	[check("page").notEmpty().withMessage("page is required")],
-	validation,
-	admin.getCategoryList
-);
+router.get("/getCategoryList", admin.getCategoryList);
 
 //------------------------------------------------Items Routes------------------------------------------------//
 /**
@@ -1432,7 +1383,7 @@ router.get(
  *       500:
  *         description: Internal server error
  */
-router.get("/getProfileDetails", authMiddleware, admin.getProfileDetails);
+router.get("/getProfileDetails", admin.getProfileDetails);
 
 //------------------------------------------------Bussiness Profile Routes------------------------------------------------//
 /**

@@ -21,17 +21,10 @@ const searchCustomers = async (req, res) => {
 				[Op.and]: [
 					{ phone_no: { [Op.like]: `%${phone_number}%` } },
 					{ business_id },
+					{ is_deleted: false },
 					{ role: "user" },
 				],
 			},
-			attributes: [
-				"first_name",
-				"last_name",
-				"user_id",
-				"phone_no",
-				"email",
-				"country_code",
-			],
 			limit: pageSize,
 			offset,
 			order: [["updatedAt", "DESC"]],
@@ -39,17 +32,30 @@ const searchCustomers = async (req, res) => {
 
 		const totalPages = Math.ceil(count / pageSize);
 
+		if (rows.length === 0) {
+			return res.status(404).json({
+				Status: 1,
+				status_code: 404,
+				message: "coustomer not fount using this phone no",
+				current_page: currentPage,
+				total_pages: totalPages,
+				data: [],
+				total: count,
+			});
+		}
+
 		return res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "Customer list fetched successfully",
 			current_page: currentPage,
 			total_pages: totalPages,
-			customers: rows,
+			data: rows,
 			total: count,
 		});
 	} catch (error) {
 		console.error("Error searching customers:", error);
-		return res.status(500).json({ error: "Internal server error" });
+		return res.status(500).json({ Status: 0, status_code: 500, message: "Internal server error" });
 	}
 };
 
@@ -72,9 +78,12 @@ const addCustomer = async (req, res) => {
 			where: { phone_no },
 		});
 		if (!!same_phone) {
-			return res
-				.status(201)
-				.json({ Status: 0, message: "This phone number already Exist" });
+			return res.status(200).json({
+				Status: 1,
+				status_code: 200,
+				message: "This phone number already Exist",
+				data: same_phone,
+			});
 		}
 		let role = "user";
 
@@ -92,17 +101,66 @@ const addCustomer = async (req, res) => {
 			// password: hashedPassword,
 		});
 
-		res.status(201).json({
+		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "The Customer Added Successfully",
-			customer: newStaff,
+			data: newStaff,
 		});
 	} catch (error) {
 		console.error("Error adding customer:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({
+			Status: 0,
+			status_code: 500,
+			message: "Internal Server Error"
+		});
 	}
 };
+
+const deleteCustomer = async (req, res) => {
+	try {
+		const business_id = req.userData.business_id;
+		const { user_id } = req.query;
+
+		const user = await db.User.findOne({
+			where: {
+				user_id: user_id,   // ✅ FIXED
+				business_id: business_id
+			}
+		});
+
+		if (!user) {
+			return res.status(404).json({
+				Status: 0,
+				status_code: 404,
+				message: "User not found",
+			});
+		}
+
+		await db.User.update(
+			{ is_deleted: true },
+			{
+				where: { user_id: user_id } // ✅ FIXED
+			}
+		);
+
+		return res.status(200).json({
+			Status: 1,
+			status_code: 200,
+			message: "Customer deleted successfully",
+		});
+	} catch (error) {
+		console.error("Error deleting customer:", error);
+		return res.status(500).json({
+			Status: 0,
+			status_code: 500,
+			message: "Internal Server Error"
+		});
+	}
+};
+
 module.exports = {
 	searchCustomers,
 	addCustomer,
+	deleteCustomer,
 };
