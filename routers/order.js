@@ -555,7 +555,7 @@ router.get("/order/:order_id", authMiddleware, orders.GetOrderDetails);
  * @swagger
  * /makeorderitem:
  *   post:
- *     summary: Add an item to an order
+ *     summary: Add items to an order
  *     tags: [OrderItem]
  *     security:
  *       - bearerAuth: []
@@ -567,28 +567,38 @@ router.get("/order/:order_id", authMiddleware, orders.GetOrderDetails);
  *             type: object
  *             required:
  *               - order_id
- *               - item_id
- *               - quantity
- *               - price
- *               - item_name
+ *               - items
  *             properties:
  *               order_id:
  *                 type: integer
- *               item_id:
- *                 type: integer
- *               item_image:
- *                 type: string
- *               note:
- *                 type: string
- *               quantity:
- *                 type: integer
- *               price:
- *                 type: number
- *               item_name:
- *                 type: string
+ *               items:
+ *                 type: array
+ *                 minItems: 1
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - item_id
+ *                     - quantity
+ *                     - price
+ *                     - item_name
+ *                   properties:
+ *                     item_id:
+ *                       type: integer
+ *                     item_image:
+ *                       type: string
+ *                     note:
+ *                       type: string
+ *                     quantity:
+ *                       type: integer
+ *                     price:
+ *                       type: number
+ *                     item_name:
+ *                       type: string
+ *                     ingrediant_id:
+ *                       type: string
  *     responses:
  *       200:
- *         description: Order item created successfully
+ *         description: Order items created successfully
  *       422:
  *         description: Validation error
  */
@@ -597,19 +607,20 @@ router.post(
 	authMiddleware,
 	[
 		check("order_id").isInt().withMessage("order_id must be an integer"),
-		check("item_id").isInt().withMessage("item_id must be an integer"),
-		check("item_image")
+		check("items").isArray({ min: 1 }).withMessage("items must be a non-empty array"),
+		check("items.*.item_id").isInt().withMessage("item_id must be an integer"),
+		check("items.*.item_image")
 			.optional({ nullable: true })
 			.isString()
 			.withMessage("item_image must be a string"),
-		check("note")
+		check("items.*.note")
 			.optional({ nullable: true })
 			.isString()
 			.withMessage("note must be a string"),
-		check("quantity").isInt().withMessage("quantity must be an integer"),
-		check("price").isFloat().withMessage("price must be a number"),
-		check("item_name").isString().withMessage("item_name must be a string"),
-		check("ingrediant_id")
+		check("items.*.quantity").isInt().withMessage("quantity must be an integer"),
+		check("items.*.price").isFloat().withMessage("price must be a number"),
+		check("items.*.item_name").isString().withMessage("item_name must be a string"),
+		check("items.*.ingrediant_id")
 			.optional({ nullable: true })
 			.isString().withMessage("ingrediant_id must be a string")
 			.custom((value) => {

@@ -2285,7 +2285,7 @@
     },
     "/makeorderitem": {
       "post": {
-        "summary": "Add an item to an order",
+        "summary": "Add items to an order",
         "tags": [
           "OrderItem"
         ],
@@ -2302,36 +2302,48 @@
                 "type": "object",
                 "required": [
                   "order_id",
-                  "item_id",
-                  "quantity",
-                  "price",
-                  "item_name"
+                  "items"
                 ],
                 "properties": {
                   "order_id": {
                     "type": "integer"
                   },
-                  "item_id": {
-                    "type": "integer"
-                  },
-                  "item_image": {
-                    "type": "string"
-                  },
-                  "note": {
-                    "type": "string"
-                  },
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "price": {
-                    "type": "number"
-                  },
-                  "item_name": {
-                    "type": "string"
-                  },
-                  "ingrediant_id": {
-                    "type": "string",
-                    "description": "Comma-separated list of ingredient IDs (e.g. '1,2,3')"
+                  "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "item_id",
+                        "quantity",
+                        "price",
+                        "item_name"
+                      ],
+                      "properties": {
+                        "item_id": {
+                          "type": "integer"
+                        },
+                        "item_image": {
+                          "type": "string"
+                        },
+                        "note": {
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "type": "integer"
+                        },
+                        "price": {
+                          "type": "number"
+                        },
+                        "item_name": {
+                          "type": "string"
+                        },
+                        "ingrediant_id": {
+                          "type": "string",
+                          "description": "Comma-separated list of ingredient IDs (e.g. '1,2,3')"
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -2340,7 +2352,7 @@
         },
         "responses": {
           "200": {
-            "description": "Order item created successfully"
+            "description": "Order items created successfully"
           },
           "422": {
             "description": "Validation error"

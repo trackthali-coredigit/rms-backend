@@ -31,6 +31,28 @@ const MakeOrder = async (req, res) => {
 			barista_id = null,
 		} = req.body;
 
+		// Validate that user_id exists
+		const orderUser = await db.User.findOne({ where: { user_id } });
+		if (!orderUser) {
+			return res.status(404).json({ Status: 0, message: "User not found" });
+		}
+
+		// Validate that waiter_id exists if provided
+		if (waiter_id) {
+			const waiter = await db.Waiter.findOne({ where: { user_id: waiter_id } });
+			if (!waiter) {
+				return res.status(404).json({ Status: 0, message: "Waiter not found" });
+			}
+		}
+
+		// Validate that barista_id exists if provided
+		if (barista_id) {
+			const barista = await db.User.findOne({ where: { user_id: barista_id, role: "barista" } });
+			if (!barista) {
+				return res.status(404).json({ Status: 0, message: "Barista not found" });
+			}
+		}
+
 		console.log(
 			"req.userData--------------------------",
 			table_id,
@@ -874,43 +896,58 @@ const MakeOrderItem = async (req, res) => {
 		if (!user) {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
-		const {
-			order_id,
-			item_id,
-			order_item_status,
-			item_image,
-			note,
-			quantity,
-			price,
-			item_name,
-			ingrediant_id,
-		} = req.body;
+		const { order_id, items } = req.body;
 
-		console.log(
-			"req.userData--------------------------",
-			order_id,
-			item_id,
-			order_item_status,
-			item_image,
-			note,
-			quantity,
-			price,
-			item_name,
-			req.userData
-		);
-		const newOrderItem = await db.Order_Item.create({
-			business_id,
-			order_id,
-			item_id,
-			order_item_status,
-			item_image,
-			note,
-			quantity,
-			price,
-			item_name,
-			ingrediant_id,
+		if (!Array.isArray(items) || items.length === 0) {
+			return res.status(400).json({ Status: 0, message: "Items array is required and cannot be empty" });
+		}
+
+		// Check if the order exists
+		const order = await db.Order.findOne({
+			where: { order_id, business_id },
 		});
-		console.log("New Order Item Created:", newOrderItem);
+		if (!order) {
+			return res.status(404).json({ Status: 0, message: "Order Not Found" });
+		}
+
+		console.log("req.userData--------------------------", order_id, items, req.userData);
+
+		const createdItems = [];
+		for (const item of items) {
+			const {
+				item_id,
+				order_item_status,
+				item_image,
+				note,
+				quantity,
+				price,
+				item_name,
+				ingrediant_id,
+			} = item;
+
+			// Check if the item exists
+			const itemExists = await db.Items.findOne({
+				where: { item_id, business_id, is_deleted: false },
+			});
+			if (!itemExists) {
+				return res.status(404).json({ Status: 0, message: `Item with id ${item_id} not found` });
+			}
+
+			const newOrderItem = await db.Order_Item.create({
+				business_id,
+				order_id,
+				item_id,
+				order_item_status,
+				item_image,
+				note,
+				quantity,
+				price,
+				item_name,
+				ingrediant_id,
+			});
+			createdItems.push(newOrderItem);
+		}
+		console.log("New Order Items Created:", createdItems);
 
 		// Get all order items for this order
 		const orderItems = await db.Order_Item.findAll({
@@ -925,15 +962,15 @@ const MakeOrderItem = async (req, res) => {
 			sub_total += itemTotal;
 			// Fetch item discount from tbl_item (items.js model)
 			let itemDiscount = 0;
-			   if (item.item_id) {
-				   const itemData = await db.Items.findOne({ where: { item_id: item.item_id, business_id, is_deleted : false } });
-				   if (itemData && itemData.discount && !isNaN(itemData.discount)) {
-					   // If discount is a percentage (e.g., 10 for 10%), treat as percent
-					   // If discount is a fixed value, treat as fixed
-					   // Here, assume discount is a fixed value per item (as per your model)
-					   itemDiscount = Number(itemData.discount) || 0;
-				   }
-			   }
+			if (item.item_id) {
+				const itemData = await db.Items.findOne({ where: { item_id: item.item_id, business_id, is_deleted: false } });
+				if (itemData && itemData.discount && !isNaN(itemData.discount)) {
+					// If discount is a percentage (e.g., 10 for 10%), treat as percent
+					// If discount is a fixed value, treat as fixed
+					// Here, assume discount is a fixed value per item (as per your model)
+					itemDiscount = Number(itemData.discount) || 0;
+				}
+			}
 			// Apply item discount per quantity
 			discount += itemDiscount * Number(item.quantity);
 		}
@@ -965,18 +1002,18 @@ const MakeOrderItem = async (req, res) => {
 			}
 		);
 
-		// Emit socket event for new order item
+		// Emit socket event for new order items
 		try {
-			await emitToSockets(current_user_id, "order_item_created", {
-				order_item: newOrderItem,
+			await emitToSockets(current_user_id, "order_items_created", {
+				order_items: createdItems,
 			});
 		} catch (e) {
 			console.error("Socket emit error (MakeOrderItem):", e);
 		}
 		return res.status(201).json({
 			Status: 1,
-			message: "Order Item Created Successfully",
-			data: newOrderItem,
+			message: "Order Items Created Successfully",
+			data: createdItems,
 		});
 	} catch (error) {
 		console.error("Error making order item:", error);

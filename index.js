@@ -82,7 +82,7 @@ const start = async () => {
 		await db.sequelize.authenticate();
 		console.log("Connection has been established successfully.");
 		// Enable alter mode to add missing columns safely
-		await db.sequelize.sync({ alter: true });
+		//await db.sequelize.sync({ alter: true });
 		console.log("Database schema synchronized successfully.");
 		console.log(
 			"..........................................................................."
