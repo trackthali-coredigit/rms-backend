@@ -1133,7 +1133,7 @@ const getCategoryList = async (req, res) => {
 };
 const getItemList = async (req, res) => {
 	try {
-		let { category_id, page, business_id } = req.query;
+		let { category_id, page, business_id, search } = req.query;
 		const pageSize = 20;
 		let whereClause;
 
@@ -1199,6 +1199,16 @@ const getItemList = async (req, res) => {
 			whereClause = { business_id };
 		}
 
+		// Add search filter for item_name
+		if (search) {
+			whereClause.item_name = { [Op.like]: `%${search}%` };
+		}
+
+		// Add category filter if provided
+		if (category_id) {
+			whereClause.category_id = category_id;
+		}
+
 		page = parseInt(page, 10) || 1;
 		if (page < 1) {
 			page = 1;
@@ -1223,8 +1233,7 @@ const getItemList = async (req, res) => {
 				},
 				{
 					model: db.Category,
-					where: { category_id },
-					required: true,
+					required: false,
 				},
 			],
 			distinct: true,
