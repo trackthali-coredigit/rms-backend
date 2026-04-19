@@ -801,13 +801,19 @@ router.delete(
  *         name: category_id
  *         schema:
  *           type: string
- *         required: true
- *         description: Category ID
+ *         required: false
+ *         description: Category ID (optional)
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Search by item name
  *       - in: query
  *         name: page
  *         schema:
  *           type: string
- *         required: true
+ *         required: false
  *         description: Page number
  *     responses:
  *       200:
@@ -819,14 +825,21 @@ router.get(
 	"/getItemList",
 	[
 		check("category_id")
-			.not()
-			.isEmpty()
-			.withMessage("Category ID is required")
-			.trim()
-			.escape()
+			.optional()
 			.isNumeric()
-			.withMessage("Category ID must be a number"),
-		check("page").notEmpty().withMessage("page is required"),
+			.withMessage("Category ID must be a number")
+			.trim()
+			.escape(),
+		check("search")
+			.optional()
+			.isString()
+			.withMessage("Search must be a string")
+			.trim()
+			.escape(),
+		check("page")
+			.optional()
+			.isNumeric()
+			.withMessage("Page must be a number"),
 	],
 	validation,
 	admin.getItemList

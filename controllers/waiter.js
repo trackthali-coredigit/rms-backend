@@ -359,6 +359,15 @@ const waiterAssignedTableList = async (req, res) => {
 						},
 					],
 				},
+				{
+					model: db.Order,
+					required: false,
+					where: {
+						order_type: "dine_in",
+						order_status: { [Op.ne]: "complete" },
+					},
+					attributes: ["order_id", "order_status", "user_id"],
+				},
 			],
 			distinct: true,
 			limit: pageSize,
