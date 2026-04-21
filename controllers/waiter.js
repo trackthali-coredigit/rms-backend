@@ -344,10 +344,6 @@ const waiterAssignedTableList = async (req, res) => {
 					include: [
 						{
 							model: db.User,
-							// required: true,
-							// where: {
-							//   user_id: user_id,
-							// },
 							attributes: [
 								"user_id",
 								"first_name",
@@ -359,19 +355,42 @@ const waiterAssignedTableList = async (req, res) => {
 						},
 					],
 				},
-				{
-					model: db.Order,
-					required: false,
-					where: {
-						order_status: "to_do"
-					},
-				},
 			],
 			distinct: true,
 			limit: pageSize,
 			offset,
 			order: [["table_no", "ASC"]],
 		});
+
+		// Fetch orders for each table and adjust JSON structure to match Flutter model
+		for (const table of rows) {
+			// Rename 'Waiters' to 'waiter_models' as expected by Flutter
+			if (table.dataValues.Waiters) {
+				table.dataValues.waiter_models = table.dataValues.Waiters;
+				delete table.dataValues.Waiters;
+
+				// Rename 'User' to 'users_model' inside each waiter model
+				for (const waiter of table.dataValues.waiter_models) {
+					if (waiter.dataValues.User) {
+						waiter.dataValues.users_model = waiter.dataValues.User;
+						delete waiter.dataValues.User;
+					}
+				}
+			}
+
+			if (table.table_id) {
+				const orders = await db.Order.findAll({
+					where: {
+						table_id: table.table_id,
+						business_id: req.userData.business_id,
+						order_status: "to_do",
+					},
+					// Removed attributes constraint to fetch all fields for TableOrderModel
+				});
+				// Rename 'orders' to 'order_models' as expected by Flutter
+				table.dataValues.order_models = orders;
+			}
+		}
 		const totalPages = Math.ceil(count / pageSize);
 
 		res.status(200).json({

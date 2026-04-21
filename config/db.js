@@ -187,6 +187,17 @@ db.Order_Item.belongsTo(db.Order, {
 	targetKey: "order_id",
 });
 
+db.Order_Item.belongsTo(db.Items, {
+	foreignKey: "item_id",
+	sourceKey: "item_id",
+	targetKey: "item_id",
+});
+db.Items.hasMany(db.Order_Item, {
+	foreignKey: "item_id",
+	sourceKey: "item_id",
+	targetKey: "item_id",
+});
+
 db.Business.hasMany(db.Order, {
 	foreignKey: "business_id",
 	sourceKey: "business_id",

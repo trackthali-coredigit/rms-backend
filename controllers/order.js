@@ -165,57 +165,57 @@ const UpdateOrder = async (req, res) => {
 			let waiter = await db.Waiter.findOne({
 				where: { id: updateFields.waiter_id }
 			});
-			
+
 			// If not found by id, try to find by user_id (user_id provided instead of waiter.id)
 			if (!waiter) {
 				waiter = await db.Waiter.findOne({
 					where: { user_id: updateFields.waiter_id }
 				});
-				
+
 				// If found by user_id, use the waiter's actual id
 				if (waiter) {
 					updateFields.waiter_id = waiter.id;
 				}
 			}
-			
+
 			// If still not found, return error
 			if (!waiter) {
-				return res.status(404).json({ 
-					Status: 0, 
-					status_code: 404, 
-					message: `Waiter with id or user_id ${updateFields.waiter_id} not found. Please provide valid waiter id or user_id of a waiter.` 
+				return res.status(404).json({
+					Status: 0,
+					status_code: 404,
+					message: `Waiter with id or user_id ${updateFields.waiter_id} not found. Please provide valid waiter id or user_id of a waiter.`
 				});
 			}
 		}
 
 		if (updateFields.barista_id) {
 			const barista = await db.User.findOne({
-				where: { 
+				where: {
 					user_id: updateFields.barista_id,
 					role: "barista"
 				}
 			});
 			if (!barista) {
-				return res.status(404).json({ 
-					Status: 0, 
-					status_code: 404, 
-					message: `Barista with id ${updateFields.barista_id} not found` 
+				return res.status(404).json({
+					Status: 0,
+					status_code: 404,
+					message: `Barista with id ${updateFields.barista_id} not found`
 				});
 			}
 		}
 
 		if (updateFields.table_id) {
 			const table = await db.Tables.findOne({
-				where: { 
+				where: {
 					table_id: updateFields.table_id,
 					business_id: business_id
 				}
 			});
 			if (!table) {
-				return res.status(404).json({ 
-					Status: 0, 
-					status_code: 404, 
-					message: `Table with id ${updateFields.table_id} not found in your business` 
+				return res.status(404).json({
+					Status: 0,
+					status_code: 404,
+					message: `Table with id ${updateFields.table_id} not found in your business`
 				});
 			}
 		}
@@ -225,10 +225,10 @@ const UpdateOrder = async (req, res) => {
 				where: { user_id: updateFields.user_id }
 			});
 			if (!orderUser) {
-				return res.status(404).json({ 
-					Status: 0, 
-					status_code: 404, 
-					message: `User with id ${updateFields.user_id} not found` 
+				return res.status(404).json({
+					Status: 0,
+					status_code: 404,
+					message: `User with id ${updateFields.user_id} not found`
 				});
 			}
 		}
@@ -247,7 +247,7 @@ const UpdateOrder = async (req, res) => {
 		}
 
 		const updatedOrder = await db.Order.findOne({
-			where: { 
+			where: {
 				order_id: order_id,
 				business_id: business_id,
 			},
@@ -429,10 +429,26 @@ const GetAllOrders = async (req, res) => {
 			order,
 		});
 
-		// Fetch ingrediant data for each order item (if ingrediant_id is comma separated)
+		// Fetch data for each order item
 		for (const order of rows) {
 			if (order.order_items_models && Array.isArray(order.order_items_models)) {
 				for (const item of order.order_items_models) {
+					// Fetch item details (name and image)
+					if (item.item_id) {
+						const itemData = await db.Items.findOne({
+							where: { item_id: item.item_id, is_deleted: false },
+							attributes: ["item_id", "item_name"],
+						});
+						if (itemData) {
+							item.dataValues.item_name = itemData.item_name;
+							const itemImage = await db.Item_Img.findOne({
+								where: { item_id: item.item_id, is_deleted: false },
+								attributes: ["image"],
+							});
+							item.dataValues.image = itemImage ? itemImage.image : null;
+						}
+					}
+					// Fetch ingrediant data
 					if (item.ingrediant_id) {
 						const ingrediantIds = item.ingrediant_id
 							.split(",")
@@ -574,10 +590,26 @@ const GetAllCurrentWaiterOrders = async (req, res) => {
 			distinct: true,
 		});
 
-		// Fetch ingrediant data for each order item (if ingrediant_id is comma separated)
+		// Fetch data for each order item
 		for (const order of rows) {
 			if (order.order_items_models && Array.isArray(order.order_items_models)) {
 				for (const item of order.order_items_models) {
+					// Fetch item details (name and image)
+					if (item.item_id) {
+						const itemData = await db.Items.findOne({
+							where: { item_id: item.item_id, is_deleted: false },
+							attributes: ["item_id", "item_name"],
+						});
+						if (itemData) {
+							item.dataValues.item_name = itemData.item_name;
+							const itemImage = await db.Item_Img.findOne({
+								where: { item_id: item.item_id, is_deleted: false },
+								attributes: ["image"],
+							});
+							item.dataValues.image = itemImage ? itemImage.image : null;
+						}
+					}
+					// Fetch ingrediant data
 					if (item.ingrediant_id) {
 						const ingrediantIds = item.ingrediant_id
 							.split(",")
@@ -672,9 +704,25 @@ const GetOrderDetails = async (req, res) => {
 		if (!order) {
 			return res.status(404).json({ Status: 0, status_code: 404, message: "Order Not Found" });
 		}
-		// Fetch ingrediant data for each order item (if ingrediant_id is comma separated)
+		// Fetch data for each order item
 		if (order.order_items_models && Array.isArray(order.order_items_models)) {
 			for (const item of order.order_items_models) {
+				// Fetch item details (name and image)
+				if (item.item_id) {
+					const itemData = await db.Items.findOne({
+						where: { item_id: item.item_id, is_deleted: false },
+						attributes: ["item_id", "item_name"],
+					});
+					if (itemData) {
+						item.dataValues.item_name = itemData.item_name;
+						const itemImage = await db.Item_Img.findOne({
+							where: { item_id: item.item_id, is_deleted: false },
+							attributes: ["image"],
+						});
+						item.dataValues.image = itemImage ? itemImage.image : null;
+					}
+				}
+				// Fetch ingrediant data
 				if (item.ingrediant_id) {
 					const ingrediantIds = item.ingrediant_id
 						.split(",")
@@ -797,10 +845,26 @@ const GetAllCurrentBaristaOrders = async (req, res) => {
 			distinct: true,
 		});
 
-		// Fetch ingrediant data for each order item (if ingrediant_id is comma separated)
+		// Fetch data for each order item
 		for (const order of rows) {
 			if (order.order_items_models && Array.isArray(order.order_items_models)) {
 				for (const item of order.order_items_models) {
+					// Fetch item details (name and image)
+					if (item.item_id) {
+						const itemData = await db.Items.findOne({
+							where: { item_id: item.item_id, is_deleted: false },
+							attributes: ["item_id", "item_name"],
+						});
+						if (itemData) {
+							item.dataValues.item_name = itemData.item_name;
+							const itemImage = await db.Item_Img.findOne({
+								where: { item_id: item.item_id, is_deleted: false },
+								attributes: ["image"],
+							});
+							item.dataValues.image = itemImage ? itemImage.image : null;
+						}
+					}
+					// Fetch ingrediant data
 					if (item.ingrediant_id) {
 						const ingrediantIds = item.ingrediant_id
 							.split(",")
@@ -926,10 +990,26 @@ const GetAllOrdersWithOrderStatus = async (req, res) => {
 			order,
 		});
 
-		// Fetch ingrediant data for each order item (if ingrediant_id is comma separated)
+		// Fetch data for each order item
 		for (const order of rows) {
 			if (order.order_items_models && Array.isArray(order.order_items_models)) {
 				for (const item of order.order_items_models) {
+					// Fetch item details (name and image)
+					if (item.item_id) {
+						const itemData = await db.Items.findOne({
+							where: { item_id: item.item_id, is_deleted: false },
+							attributes: ["item_id", "item_name"],
+						});
+						if (itemData) {
+							item.dataValues.item_name = itemData.item_name;
+							const itemImage = await db.Item_Img.findOne({
+								where: { item_id: item.item_id, is_deleted: false },
+								attributes: ["image"],
+							});
+							item.dataValues.image = itemImage ? itemImage.image : null;
+						}
+					}
+					// Fetch ingrediant data
 					if (item.ingrediant_id) {
 						const ingrediantIds = item.ingrediant_id
 							.split(",")
@@ -1013,9 +1093,10 @@ const MakeOrderItem = async (req, res) => {
 				ingrediant_id,
 			} = item;
 
-			// Check if the item exists
+			// Check if the item exists and fetch item details
 			const itemExists = await db.Items.findOne({
 				where: { item_id, business_id, is_deleted: false },
+				attributes: ['item_id', 'item_name', 'discount']
 			});
 			if (!itemExists) {
 				return res.status(404).json({ Status: 0, status_code: 404, message: `Item with id ${item_id} not found` });
@@ -1030,6 +1111,17 @@ const MakeOrderItem = async (req, res) => {
 				price,
 				ingrediant_id,
 			});
+
+			// Add item details to the response
+			newOrderItem.dataValues.item_name = itemExists.item_name;
+
+			// Fetch item image from separate Item_Img table
+			const itemImage = await db.Item_Img.findOne({
+				where: { item_id, is_deleted: false },
+				attributes: ['image']
+			});
+			newOrderItem.dataValues.image = itemImage ? itemImage.image : null;
+
 			createdItems.push(newOrderItem);
 		}
 		console.log("New Order Items Created:", createdItems);
@@ -1173,6 +1265,25 @@ const UpdateOrderItem = async (req, res) => {
 				const updatedOrderItem = await db.Order_Item.findOne({
 					where: { orderItem_id },
 				});
+
+				// Fetch item details (image and name) from Items and Item_Img table
+				if (updatedOrderItem && updatedOrderItem.item_id) {
+					const itemDetails = await db.Items.findOne({
+						where: { item_id: updatedOrderItem.item_id, business_id, is_deleted: false },
+						attributes: ['item_id', 'item_name']
+					});
+					if (itemDetails) {
+						updatedOrderItem.dataValues.item_name = itemDetails.item_name;
+
+						// Fetch item image from separate Item_Img table
+						const itemImage = await db.Item_Img.findOne({
+							where: { item_id: updatedOrderItem.item_id, is_deleted: false },
+							attributes: ['image']
+						});
+						updatedOrderItem.dataValues.image = itemImage ? itemImage.image : null;
+					}
+				}
+
 				updatedItems.push(updatedOrderItem);
 			}
 
@@ -1255,6 +1366,25 @@ const UpdateOrderItem = async (req, res) => {
 			const updatedOrderItem = await db.Order_Item.findOne({
 				where: { orderItem_id: req.params.order_item_id },
 			});
+
+			// Fetch item details (image and name) from Items and Item_Img table
+			if (updatedOrderItem && updatedOrderItem.item_id) {
+				const itemDetails = await db.Items.findOne({
+					where: { item_id: updatedOrderItem.item_id, business_id, is_deleted: false },
+					attributes: ['item_id', 'item_name']
+				});
+				if (itemDetails) {
+					updatedOrderItem.dataValues.item_name = itemDetails.item_name;
+
+					// Fetch item image from separate Item_Img table
+					const itemImage = await db.Item_Img.findOne({
+						where: { item_id: updatedOrderItem.item_id, is_deleted: false },
+						attributes: ['image']
+					});
+					updatedOrderItem.dataValues.image = itemImage ? itemImage.image : null;
+				}
+			}
+
 			// Emit socket event for order item update
 			try {
 				await emitToSockets(current_user_id, "order_item_updated", {
@@ -1487,7 +1617,7 @@ const WaiterOrderComplete = async (req, res) => {
 		} catch (e) {
 			console.error("Socket emit error (WaiterOrderComplete):", e);
 		}
-		return res.status(200).json({ Status: 1,  status_code: 200, message: "Order Marked as Complete Successfully", data: true });
+		return res.status(200).json({ Status: 1, status_code: 200, message: "Order Marked as Complete Successfully", data: true });
 	} catch (error) {
 		console.error("Error completing order:", error);
 		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });

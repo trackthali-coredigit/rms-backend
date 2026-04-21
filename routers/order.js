@@ -213,7 +213,7 @@ router.delete("/deleteorder/:order_id", authMiddleware, orders.DeleteOrder);
  *         description: End date for filtering (ISO 8601 format)
  *     responses:
  *       200:
- *         description: Orders fetched successfully
+ *         description: Orders fetched successfully. Each order contains order_items with item_name and image.
  *       422:
  *         description: Validation error
  */
@@ -316,7 +316,7 @@ router.get(
  *         description: End date for filtering (ISO 8601 format)
  *     responses:
  *       200:
- *         description: Orders fetched successfully
+ *         description: Orders fetched successfully. Each order contains order_items with item_name and image.
  *       422:
  *         description: Validation error
  */
@@ -398,7 +398,7 @@ router.get(
  *           enum: [ASC, DESC, asc, desc]
  *     responses:
  *       200:
- *         description: Orders fetched successfully
+ *         description: Orders fetched successfully. Each order contains order_items with item_name and image.
  *       422:
  *         description: Validation error
  */
@@ -545,7 +545,7 @@ router.get(
  *         description: The ID of the order
  *     responses:
  *       200:
- *         description: Order details fetched successfully
+ *         description: Order details fetched successfully. Contains order_items with item_name and image.
  *       404:
  *         description: Order not found
  */
@@ -598,7 +598,7 @@ router.get("/order/:order_id", authMiddleware, orders.GetOrderDetails);
  *                       type: string
  *     responses:
  *       200:
- *         description: Order items created successfully
+ *         description: Order items created successfully. Returns items with populated item_name and image.
  *       422:
  *         description: Validation error
  */
@@ -643,17 +643,18 @@ router.post(
  * @swagger
  * /updateorderitem/{order_item_id}:
  *   put:
- *     summary: Update an order item
+ *     summary: Update an order item (Single or Batch)
+ *     description: Update a single item by providing order_item_id in path, or batch update by providing an 'items' array in request body.
  *     tags: [OrderItem]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: order_item_id
- *         required: true
+ *         required: false
  *         schema:
  *           type: integer
- *         description: The ID of the order item to update
+ *         description: The ID of the order item to update (optional for batch update)
  *     requestBody:
  *       required: true
  *       content:
@@ -667,19 +668,33 @@ router.post(
  *                 type: number
  *               note:
  *                 type: string
- *               item_image:
- *                 type: string
  *               order_item_status:
  *                 type: string
- *                 enum: [to_do, in_making, ready_to_serve, served, cancelled]
+ *                 enum: [to_do, in_progress, in_making, ready_to_serve, served, cancelled, completed]
+ *               items:
+ *                 type: array
+ *                 description: List of items for batch update. Each item should have order_item_id.
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     order_item_id:
+ *                       type: integer
+ *                     quantity:
+ *                       type: integer
+ *                     price:
+ *                       type: number
+ *                     note:
+ *                       type: string
+ *                     order_item_status:
+ *                       type: string
  *     responses:
  *       200:
- *         description: Order item updated successfully
+ *         description: Order item(s) updated successfully. Returns updated items with item_name and image.
  *       404:
  *         description: Order item not found
  */
 router.put(
-	"/updateorderitem",
+	"/updateorderitem/:order_item_id?",
 	authMiddleware,
 	orders.UpdateOrderItem
 );

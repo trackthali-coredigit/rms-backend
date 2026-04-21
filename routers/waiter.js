@@ -30,7 +30,62 @@ let validation = (req, res, next) => {
  *         description: Page number
  *     responses:
  *       200:
- *         description: Waiter assigned table list
+ *         description: Waiter assigned table list fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 Status:
+ *                   type: integer
+ *                 status_code:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       table_id:
+ *                         type: integer
+ *                       business_id:
+ *                         type: integer
+ *                       table_no:
+ *                         type: integer
+ *                       status:
+ *                         type: string
+ *                       is_assigned_to_waiter:
+ *                         type: boolean
+ *                       waiter_models:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             user_id:
+ *                               type: integer
+ *                             users_model:
+ *                               type: object
+ *                               properties:
+ *                                 user_id:
+ *                                   type: integer
+ *                                 first_name:
+ *                                   type: string
+ *                                 last_name:
+ *                                   type: string
+ *                                 role:
+ *                                   type: string
+ *                       order_models:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             order_id:
+ *                               type: integer
+ *                             order_status:
+ *                               type: string
+ *                             total_price:
+ *                               type: number
  *       400:
  *         description: Validation error
  */
