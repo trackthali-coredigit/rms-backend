@@ -51,6 +51,21 @@ router.get(
 	customer_routes.searchCustomers
 );
 
+router.get(
+	"/search/customers/by-id/:user_id",
+	authMiddleware,
+	[
+		check("user_id")
+			.not()
+			.isEmpty()
+			.withMessage("User ID is required")
+			.isNumeric()
+			.withMessage("User ID must be a number"),
+	],
+	validation,
+	customer_routes.searchCustomersById
+);
+
 /**
  * @swagger
  * /add/customer:

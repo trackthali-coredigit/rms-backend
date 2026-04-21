@@ -619,7 +619,10 @@ router.post(
 			.withMessage("note must be a string"),
 		check("items.*.quantity").isInt().withMessage("quantity must be an integer"),
 		check("items.*.price").isFloat().withMessage("price must be a number"),
-		check("items.*.item_name").isString().withMessage("item_name must be a string"),
+		check("items.*.item_name")
+			.optional({ nullable: true })
+			.isString()
+			.withMessage("item_name must be a string"),
 		check("items.*.ingrediant_id")
 			.optional({ nullable: true })
 			.isString().withMessage("ingrediant_id must be a string")
@@ -676,7 +679,7 @@ router.post(
  *         description: Order item not found
  */
 router.put(
-	"/updateorderitem/:order_item_id",
+	"/updateorderitem",
 	authMiddleware,
 	orders.UpdateOrderItem
 );

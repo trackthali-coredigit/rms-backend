@@ -21,7 +21,62 @@ const searchCustomers = async (req, res) => {
 				[Op.and]: [
 					{ phone_no: { [Op.like]: `%${phone_number}%` } },
 					{ business_id },
-					{ is_deleted: false },
+					{ role: "user" },
+				],
+			},
+			limit: pageSize,
+			offset,
+			order: [["updatedAt", "DESC"]],
+		});
+
+		const totalPages = Math.ceil(count / pageSize);
+
+		if (rows.length === 0) {
+			return res.status(404).json({
+				Status: 1,
+				status_code: 404,
+				message: "coustomer not fount using this phone no",
+				current_page: currentPage,
+				total_pages: totalPages,
+				data: [],
+				total: count,
+			});
+		}
+
+		return res.status(200).json({
+			Status: 1,
+			status_code: 200,
+			message: "Customer list fetched successfully",
+			current_page: currentPage,
+			total_pages: totalPages,
+			data: rows,
+			total: count,
+		});
+	} catch (error) {
+		console.error("Error searching customers:", error);
+		return res.status(500).json({ Status: 0, status_code: 500, message: "Internal server error" });
+	}
+};
+
+const searchCustomersById = async (req, res) => {
+	try {
+		const { user_id } = req.params;
+		const business_id = req.userData.business_id;
+		console.log(
+			req.userData.user_id,
+			req.userData.business_id,
+			"req.userData",
+			req.userData
+		);
+		const pageSize = parseInt(req.query.pageSize) || 10;
+		const currentPage = parseInt(req.query.page) || 1;
+		const offset = (currentPage - 1) * pageSize;
+
+		const { count, rows } = await db.User.findAndCountAll({
+			where: {
+				[Op.and]: [
+					{ user_id },
+					{ business_id },
 					{ role: "user" },
 				],
 			},
@@ -161,6 +216,7 @@ const deleteCustomer = async (req, res) => {
 
 module.exports = {
 	searchCustomers,
+	searchCustomersById,
 	addCustomer,
 	deleteCustomer,
 };

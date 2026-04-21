@@ -363,16 +363,14 @@ const waiterAssignedTableList = async (req, res) => {
 					model: db.Order,
 					required: false,
 					where: {
-						order_type: "dine_in",
-						order_status: { [Op.ne]: "complete" },
+						order_status: "to_do"
 					},
-					attributes: ["order_id", "order_status", "user_id"],
 				},
 			],
 			distinct: true,
 			limit: pageSize,
 			offset,
-			order: [[`waiter_models`, `createdAt`, "DESC"]],
+			order: [["table_no", "ASC"]],
 		});
 		const totalPages = Math.ceil(count / pageSize);
 
@@ -386,7 +384,7 @@ const waiterAssignedTableList = async (req, res) => {
 		});
 	} catch (error) {
 		console.error("Error fetching waiter assigned table list:", error);
-		res.status(500).json({ Status: 0,status_code: 500, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 

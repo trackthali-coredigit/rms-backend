@@ -20,7 +20,7 @@ const MakeOrder = async (req, res) => {
 		});
 
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
 		const {
@@ -34,22 +34,24 @@ const MakeOrder = async (req, res) => {
 		// Validate that user_id exists
 		const orderUser = await db.User.findOne({ where: { user_id } });
 		if (!orderUser) {
-			return res.status(404).json({ Status: 0, message: "User not found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "User not found" });
 		}
 
 		// Validate that waiter_id exists if provided
+		let waiterId = null;
 		if (waiter_id) {
 			const waiter = await db.Waiter.findOne({ where: { user_id: waiter_id } });
 			if (!waiter) {
-				return res.status(404).json({ Status: 0, message: "Waiter not found" });
+				return res.status(404).json({ Status: 0, status_code: 404, message: "Waiter not found" });
 			}
+			waiterId = waiter.id;
 		}
 
 		// Validate that barista_id exists if provided
 		if (barista_id) {
 			const barista = await db.User.findOne({ where: { user_id: barista_id, role: "barista" } });
 			if (!barista) {
-				return res.status(404).json({ Status: 0, message: "Barista not found" });
+				return res.status(404).json({ Status: 0, status_code: 404, message: "Barista not found" });
 			}
 		}
 
@@ -66,7 +68,7 @@ const MakeOrder = async (req, res) => {
 		const newOrder = await db.Order.create({
 			table_id,
 			order_type,
-			waiter_id,
+			waiter_id: waiterId,
 			user_id,
 			barista_id,
 			business_id,
@@ -84,13 +86,11 @@ const MakeOrder = async (req, res) => {
 			});
 			console.log("Found table:", table);
 			if (!table) {
-				return res.status(404).json({ Status: 0, message: "Table Not Found" });
+				return res.status(404).json({ Status: 0, status_code: 404, message: "Table Not Found" });
 			}
 
 			if (table?.status === "occupied") {
-				return res
-					.status(400)
-					.json({ Status: 0, message: "Table is already occupied" });
+				return res.status(400).json({ Status: 0, status_code: 400, message: "Table is already occupied" });
 			}
 			await db.Tables.update(
 				{ status: "occupied" },
@@ -108,14 +108,15 @@ const MakeOrder = async (req, res) => {
 		} catch (e) {
 			console.error("Socket emit error (MakeOrder):", e);
 		}
-		return res.status(201).json({
+		return res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "Order Created Successfully",
 			data: newOrder,
 		});
 	} catch (error) {
 		console.error("Error making order:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -124,6 +125,8 @@ const UpdateOrder = async (req, res) => {
 		console.log("im in update order controller");
 		const current_user_id = req.userData.user_id;
 		const business_id = req.userData.business_id;
+		const order_id = req.params.order_id;
+
 		const user = await db.User.findOne({
 			where: {
 				[Op.and]: [
@@ -134,30 +137,120 @@ const UpdateOrder = async (req, res) => {
 		});
 
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
-		const updateFields = { ...req.body, business_id };
+		// Validate order exists and belongs to user's business
+		const order = await db.Order.findOne({
+			where: {
+				order_id: order_id,
+				business_id: business_id,
+			},
+		});
+
+		if (!order) {
+			return res.status(404).json({ Status: 0, status_code: 404, message: "Order Not Found or does not belong to your business" });
+		}
+
+		const updateFields = { ...req.body };
 
 		// Remove undefined or null fields to avoid overwriting with null/undefined
 		Object.keys(updateFields).forEach(
 			(key) => updateFields[key] == null && delete updateFields[key]
 		);
 
+		// Validate foreign key references before updating
+		if (updateFields.waiter_id) {
+			// First try to find waiter by id (from tbl_waiter.id)
+			let waiter = await db.Waiter.findOne({
+				where: { id: updateFields.waiter_id }
+			});
+			
+			// If not found by id, try to find by user_id (user_id provided instead of waiter.id)
+			if (!waiter) {
+				waiter = await db.Waiter.findOne({
+					where: { user_id: updateFields.waiter_id }
+				});
+				
+				// If found by user_id, use the waiter's actual id
+				if (waiter) {
+					updateFields.waiter_id = waiter.id;
+				}
+			}
+			
+			// If still not found, return error
+			if (!waiter) {
+				return res.status(404).json({ 
+					Status: 0, 
+					status_code: 404, 
+					message: `Waiter with id or user_id ${updateFields.waiter_id} not found. Please provide valid waiter id or user_id of a waiter.` 
+				});
+			}
+		}
+
+		if (updateFields.barista_id) {
+			const barista = await db.User.findOne({
+				where: { 
+					user_id: updateFields.barista_id,
+					role: "barista"
+				}
+			});
+			if (!barista) {
+				return res.status(404).json({ 
+					Status: 0, 
+					status_code: 404, 
+					message: `Barista with id ${updateFields.barista_id} not found` 
+				});
+			}
+		}
+
+		if (updateFields.table_id) {
+			const table = await db.Tables.findOne({
+				where: { 
+					table_id: updateFields.table_id,
+					business_id: business_id
+				}
+			});
+			if (!table) {
+				return res.status(404).json({ 
+					Status: 0, 
+					status_code: 404, 
+					message: `Table with id ${updateFields.table_id} not found in your business` 
+				});
+			}
+		}
+
+		if (updateFields.user_id) {
+			const orderUser = await db.User.findOne({
+				where: { user_id: updateFields.user_id }
+			});
+			if (!orderUser) {
+				return res.status(404).json({ 
+					Status: 0, 
+					status_code: 404, 
+					message: `User with id ${updateFields.user_id} not found` 
+				});
+			}
+		}
+
 		console.log("Updating order with fields:", updateFields, req.userData);
 
 		const [affectedRows] = await db.Order.update(updateFields, {
 			where: {
-				order_id: req.params.order_id,
+				order_id: order_id,
+				business_id: business_id,
 			},
 		});
 
 		if (affectedRows === 0) {
-			return res.status(404).json({ Status: 0, message: "Order Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "Order could not be updated" });
 		}
 
 		const updatedOrder = await db.Order.findOne({
-			where: { order_id: req.params.order_id },
+			where: { 
+				order_id: order_id,
+				business_id: business_id,
+			},
 		});
 
 		// Emit socket event for order update
@@ -170,12 +263,13 @@ const UpdateOrder = async (req, res) => {
 		}
 		return res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "Order Updated Successfully",
 			data: updatedOrder,
 		});
 	} catch (error) {
 		console.error("Error updating order:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -193,7 +287,7 @@ const DeleteOrder = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		// Proceed with deleting the order
 		const { order_id } = req.params;
@@ -201,7 +295,7 @@ const DeleteOrder = async (req, res) => {
 			where: { order_id, business_id },
 		});
 		if (!order) {
-			return res.status(404).json({ Status: 0, message: "Order Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "Order Not Found" });
 		}
 
 		if (order.order_type === "dine_in") {
@@ -216,7 +310,7 @@ const DeleteOrder = async (req, res) => {
 			});
 			console.log("Found table:", table);
 			if (!table) {
-				return res.status(404).json({ Status: 0, message: "Table Not Found" });
+				return res.status(404).json({ Status: 0, status_code: 404, message: "Table Not Found" });
 			}
 
 			await db.Tables.update(
@@ -236,12 +330,10 @@ const DeleteOrder = async (req, res) => {
 		} catch (e) {
 			console.error("Socket emit error (DeleteOrder):", e);
 		}
-		return res
-			.status(200)
-			.json({ Status: 1, message: "Order Deleted Successfully" });
+		return res.status(200).json({ Status: 1, status_code: 200, message: "Order Deleted Successfully" });
 	} catch (error) {
 		console.error("Error deleting order:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -534,7 +626,7 @@ const GetOrderDetails = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		const { order_id } = req.params;
 		const order = await db.Order.findOne({
@@ -578,7 +670,7 @@ const GetOrderDetails = async (req, res) => {
 			],
 		});
 		if (!order) {
-			return res.status(404).json({ Status: 0, message: "Order Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "Order Not Found" });
 		}
 		// Fetch ingrediant data for each order item (if ingrediant_id is comma separated)
 		if (order.order_items_models && Array.isArray(order.order_items_models)) {
@@ -603,13 +695,13 @@ const GetOrderDetails = async (req, res) => {
 		}
 
 		return res.status(200).json({
-			Status: 1,
+			Status: 1, status_code: 200,
 			message: "Order details fetched successfully",
 			data: order,
 		});
 	} catch (error) {
 		console.error("Error getting order details:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -743,7 +835,6 @@ const GetAllCurrentBaristaOrders = async (req, res) => {
 	}
 };
 
-// GET all order where order_status is "to_do"
 const GetAllOrdersWithOrderStatus = async (req, res) => {
 	try {
 		console.log("im in get all orders with status controller");
@@ -894,12 +985,12 @@ const MakeOrderItem = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		const { order_id, items } = req.body;
 
 		if (!Array.isArray(items) || items.length === 0) {
-			return res.status(400).json({ Status: 0, message: "Items array is required and cannot be empty" });
+			return res.status(400).json({ Status: 0, status_code: 400, message: "Items array is required and cannot be empty" });
 		}
 
 		// Check if the order exists
@@ -907,7 +998,7 @@ const MakeOrderItem = async (req, res) => {
 			where: { order_id, business_id },
 		});
 		if (!order) {
-			return res.status(404).json({ Status: 0, message: "Order Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "Order Not Found" });
 		}
 
 		console.log("req.userData--------------------------", order_id, items, req.userData);
@@ -916,12 +1007,9 @@ const MakeOrderItem = async (req, res) => {
 		for (const item of items) {
 			const {
 				item_id,
-				order_item_status,
-				item_image,
 				note,
 				quantity,
 				price,
-				item_name,
 				ingrediant_id,
 			} = item;
 
@@ -930,19 +1018,16 @@ const MakeOrderItem = async (req, res) => {
 				where: { item_id, business_id, is_deleted: false },
 			});
 			if (!itemExists) {
-				return res.status(404).json({ Status: 0, message: `Item with id ${item_id} not found` });
+				return res.status(404).json({ Status: 0, status_code: 404, message: `Item with id ${item_id} not found` });
 			}
 
 			const newOrderItem = await db.Order_Item.create({
 				business_id,
 				order_id,
 				item_id,
-				order_item_status,
-				item_image,
 				note,
 				quantity,
 				price,
-				item_name,
 				ingrediant_id,
 			});
 			createdItems.push(newOrderItem);
@@ -1010,14 +1095,15 @@ const MakeOrderItem = async (req, res) => {
 		} catch (e) {
 			console.error("Socket emit error (MakeOrderItem):", e);
 		}
-		return res.status(201).json({
+		return res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "Order Items Created Successfully",
 			data: createdItems,
 		});
 	} catch (error) {
 		console.error("Error making order item:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -1037,38 +1123,152 @@ const UpdateOrderItem = async (req, res) => {
 		if (!user) {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
-		const updateFields = { ...req.body, business_id };
-		// Remove undefined or null fields to avoid overwriting with null/undefined
-		Object.keys(updateFields).forEach(
-			(key) => updateFields[key] == null && delete updateFields[key]
-		);
-		console.log("Updating order item with fields:", updateFields, req.userData);
-		const [affectedRows] = await db.Order_Item.update(updateFields, {
-			where: {
-				orderItem_id: req.params.order_item_id,
-			},
-		});
-		if (affectedRows === 0) {
-			return res
-				.status(404)
-				.json({ Status: 0, message: "Order Item Not Found" });
-		}
-		const updatedOrderItem = await db.Order_Item.findOne({
-			where: { orderItem_id: req.params.order_item_id },
-		});
-		// Emit socket event for order item update
-		try {
-			await emitToSockets(current_user_id, "order_item_updated", {
-				order_item: updatedOrderItem,
+
+		// Check if updating multiple items or single item
+		const { items, order_id } = req.body;
+		const isBatchUpdate = Array.isArray(items) && items.length > 0;
+
+		if (isBatchUpdate) {
+			// Batch update multiple items
+			console.log("Batch updating order items:", items.length, "items");
+
+			// Validate order exists
+			if (!order_id) {
+				return res.status(400).json({ Status: 0, status_code: 400, message: "order_id is required for batch updates" });
+			}
+
+			const order = await db.Order.findOne({
+				where: { order_id, business_id },
 			});
-		} catch (e) {
-			console.error("Socket emit error (UpdateOrderItem):", e);
+			if (!order) {
+				return res.status(404).json({ Status: 0, status_code: 404, message: "Order Not Found" });
+			}
+
+			const updatedItems = [];
+			for (const item of items) {
+				const { orderItem_id, quantity, note, order_item_status, price } = item;
+
+				if (!orderItem_id) {
+					return res.status(400).json({ Status: 0, status_code: 400, message: "orderItem_id is required for each item" });
+				}
+
+				const updateFields = {};
+				if (quantity !== undefined && quantity !== null) updateFields.quantity = quantity;
+				if (note !== undefined && note !== null) updateFields.note = note;
+				if (order_item_status !== undefined && order_item_status !== null) updateFields.order_item_status = order_item_status;
+				if (price !== undefined && price !== null) updateFields.price = price;
+
+				const [affectedRows] = await db.Order_Item.update(updateFields, {
+					where: {
+						orderItem_id,
+						business_id,
+						order_id,
+					},
+				});
+
+				if (affectedRows === 0) {
+					return res.status(404).json({ Status: 0, status_code: 404, message: `Order Item with id ${orderItem_id} not found` });
+				}
+
+				const updatedOrderItem = await db.Order_Item.findOne({
+					where: { orderItem_id },
+				});
+				updatedItems.push(updatedOrderItem);
+			}
+
+			// Recalculate order totals after batch update
+			const orderItems = await db.Order_Item.findAll({
+				where: { order_id, business_id },
+			});
+
+			let sub_total = 0;
+			let discount = 0;
+			for (const item of orderItems) {
+				const itemTotal = Number(item.price) * Number(item.quantity);
+				sub_total += itemTotal;
+
+				let itemDiscount = 0;
+				if (item.item_id) {
+					const itemData = await db.Items.findOne({ where: { item_id: item.item_id, business_id, is_deleted: false } });
+					if (itemData && itemData.discount && !isNaN(itemData.discount)) {
+						itemDiscount = Number(itemData.discount) || 0;
+					}
+				}
+				discount += itemDiscount * Number(item.quantity);
+			}
+
+			const business = await db.Business.findOne({ where: { business_id } });
+			let taxPercent = 0.18;
+			if (business && business.tax) {
+				taxPercent = Number(business.tax) / 100;
+			}
+
+			const taxable_amount = sub_total - discount;
+			const taxes = taxable_amount * taxPercent;
+			const total_price = taxable_amount + taxes;
+
+			await db.Order.update(
+				{
+					sub_total: sub_total,
+					discount: discount,
+					taxes: taxes,
+					total_price: total_price,
+				},
+				{
+					where: { order_id, business_id },
+				}
+			);
+
+			// Emit socket event for batch order items update
+			try {
+				await emitToSockets(current_user_id, "order_items_updated", {
+					order_items: updatedItems,
+				});
+			} catch (e) {
+				console.error("Socket emit error (UpdateOrderItem - Batch):", e);
+			}
+
+			return res.status(200).json({
+				Status: 1,
+				status_code: 200,
+				message: "Order Items Updated Successfully",
+				data: updatedItems,
+			});
+		} else {
+			// Single item update (backward compatibility)
+			const updateFields = { ...req.body, business_id };
+			// Remove undefined or null fields to avoid overwriting with null/undefined
+			Object.keys(updateFields).forEach(
+				(key) => updateFields[key] == null && delete updateFields[key]
+			);
+			console.log("Updating order item with fields:", updateFields, req.userData);
+			const [affectedRows] = await db.Order_Item.update(updateFields, {
+				where: {
+					orderItem_id: req.params.order_item_id,
+				},
+			});
+			if (affectedRows === 0) {
+				return res
+					.status(404)
+					.json({ Status: 0, message: "Order Item Not Found" });
+			}
+			const updatedOrderItem = await db.Order_Item.findOne({
+				where: { orderItem_id: req.params.order_item_id },
+			});
+			// Emit socket event for order item update
+			try {
+				await emitToSockets(current_user_id, "order_item_updated", {
+					order_item: updatedOrderItem,
+				});
+			} catch (e) {
+				console.error("Socket emit error (UpdateOrderItem):", e);
+			}
+			return res.status(200).json({
+				Status: 1,
+				message: "Order Item Updated Successfully",
+				data: updatedOrderItem,
+			});
 		}
-		return res.status(200).json({
-			Status: 1,
-			message: "Order Item Updated Successfully",
-			data: updatedOrderItem,
-		});
 	} catch (error) {
 		console.error("Error updating order item:", error);
 		res.status(500).json({ Status: 0, message: "Internal Server Error" });
@@ -1249,19 +1449,17 @@ const WaiterOrderComplete = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		// Proceed with marking the order as complete
 		const { order_id } = req.params;
 		const { order_status } = req.body;
 		const order = await db.Order.findOne({ where: { order_id, business_id } });
 		if (!order) {
-			return res.status(404).json({ Status: 0, message: "Order Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "Order Not Found" });
 		}
 		if (order_status !== "completed") {
-			return res
-				.status(400)
-				.json({ Status: 0, message: "Invalid order status update" });
+			return res.status(400).json({ Status: 0, status_code: 400, message: "Invalid order status update" });
 		}
 		order.order_status = "completed";
 		// Update all associated order items to 'served' if they are not cancelled
@@ -1289,12 +1487,10 @@ const WaiterOrderComplete = async (req, res) => {
 		} catch (e) {
 			console.error("Socket emit error (WaiterOrderComplete):", e);
 		}
-		return res
-			.status(200)
-			.json({ Status: 1, message: "Order Marked as Complete Successfully" });
+		return res.status(200).json({ Status: 1,  status_code: 200, message: "Order Marked as Complete Successfully", data: true });
 	} catch (error) {
 		console.error("Error completing order:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 

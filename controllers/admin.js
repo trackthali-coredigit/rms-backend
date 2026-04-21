@@ -1297,7 +1297,7 @@ const getItemList = async (req, res) => {
 				},
 				{
 					model: db.Ingrediant,
-					required: true,
+					required: false,
 				},
 				{
 					model: db.Category,
@@ -1608,7 +1608,7 @@ const editStaffProfile = async (req, res) => {
 	}
 };
 const deleteStaff = async (req, res) => {
-	// try {
+	try {
 		const user_id = req.userData.user_id;
 		const user = req.userData;
 		// const user = await db.User.findOne({
@@ -1683,10 +1683,10 @@ const deleteStaff = async (req, res) => {
 		res
 			.status(200)
 			.json({ Status: 1, message: "The Staff member deleted successfully" });
-	// } catch (error) {
-	// 	console.error("Error deleting staff member:", error);
-	// 	res.status(500).json({ Status: 0, message: "Internal Server Error" });
-	// }
+	} catch (error) {
+		console.error("Error deleting staff member:", error);
+		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+	}
 };
 
 const addTable = async (req, res) => {
@@ -1841,7 +1841,7 @@ const removeTable = async (req, res) => {
 };
 const assignWaiterToTables = async (req, res) => {
 	try {
-		const userId = req.userData.user_id; // Verify the user's token
+		const userId = req.userData.user_id;
 		const user = await db.User.findOne({
 			where: {
 				[Op.and]: [
