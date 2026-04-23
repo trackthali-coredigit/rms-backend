@@ -24,6 +24,7 @@ const waiter_router = require("./routers/waiter");
 const order_router = require("./routers/order");
 const customer_router = require("./routers/customer");
 const contact_info_router = require("./routers/contact_info");
+const app_policy_router = require("./routers/app_policy");
 const { socketConfig } = require("./config/socketConfig");
 const { setIO } = require("./config/socketSetup");
 const { initializeRedis } = require("./config/redisConfig");
@@ -48,6 +49,7 @@ app.use("/", waiter_router);
 app.use("/", order_router);
 app.use("/", customer_router);
 app.use("/", contact_info_router);
+app.use("/", app_policy_router);
 // TODO: As per updated flow barista and user does not need to access order routes as of now
 // app.use("/", barista_router);
 // app.use("/", user_router);

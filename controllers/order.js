@@ -353,8 +353,8 @@ const GetAllOrders = async (req, res) => {
 		if (!user) {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
-		const { page, order_status, order_type, bill_status, sort_by, sort_order } =
-			req.body;
+		const { page, order_status, order_type, bill_status, sort_by, sort_order, start_date, end_date } =
+			req.query;
 		const pageSize = 20;
 		let currentPage = parseInt(page, 10) || 1;
 		if (currentPage < 1) currentPage = 1;
@@ -372,6 +372,17 @@ const GetAllOrders = async (req, res) => {
 		}
 		if (bill_status && bill_status !== "all") {
 			where.bill_status = bill_status;
+		}
+
+		// Add date range filtering
+		if (start_date || end_date) {
+			where.createdAt = {};
+			if (start_date) {
+				where.createdAt[Op.gte] = new Date(start_date);
+			}
+			if (end_date) {
+				where.createdAt[Op.lte] = new Date(end_date);
+			}
 		}
 
 		// Sorting
@@ -498,7 +509,7 @@ const GetAllCurrentWaiterOrders = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		const { page, order_status, order_type, bill_status, sort_by = "updatedAt", sort_order = "DESC", start_date, end_date } = req.query;
 		const pageSize = 20;
@@ -522,14 +533,10 @@ const GetAllCurrentWaiterOrders = async (req, res) => {
 		if (start_date || end_date) {
 			where.createdAt = {};
 			if (start_date) {
-				const startOfDay = new Date(start_date);
-				startOfDay.setUTCHours(0, 0, 0, 0);
-				where.createdAt[Op.gte] = startOfDay;
+				where.createdAt[Op.gte] = new Date(start_date);
 			}
 			if (end_date) {
-				const endOfDay = new Date(end_date);
-				endOfDay.setUTCHours(23, 59, 59, 999);
-				where.createdAt[Op.lte] = endOfDay;
+				where.createdAt[Op.lte] = new Date(end_date);
 			}
 		}
 
@@ -630,17 +637,30 @@ const GetAllCurrentWaiterOrders = async (req, res) => {
 			}
 		}
 		const totalPages = Math.ceil(count / pageSize);
+
+		if (rows.length === 0) {
+			return res.status(404).json({
+				Status: 1,
+				status_code: 404,
+				message: order_type == "take_away" ? "No take-away orders found." : "No orders found.",
+				current_page: currentPage,
+				total_pages: totalPages,
+				total: count,
+			});
+		}
+
 		return res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "Current Waiter Orders fetched successfully",
 			current_page: currentPage,
 			total_pages: totalPages,
-			orders: rows,
+			data: rows,
 			total: count,
 		});
 	} catch (error) {
 		console.error("Error getting current waiter orders:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -769,8 +789,8 @@ const GetAllCurrentBaristaOrders = async (req, res) => {
 		if (!user) {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
-		const { page, order_status, order_type, bill_status, sort_by, sort_order } =
-			req.body;
+		const { page, order_status, order_type, bill_status, sort_by, sort_order, start_date, end_date } =
+			req.query;
 		const pageSize = 20;
 		let currentPage = parseInt(page, 10) || 1;
 		if (currentPage < 1) currentPage = 1;
@@ -786,6 +806,17 @@ const GetAllCurrentBaristaOrders = async (req, res) => {
 		}
 		if (bill_status && bill_status !== "all") {
 			where.bill_status = bill_status;
+		}
+
+		// Add date range filtering
+		if (start_date || end_date) {
+			where.createdAt = {};
+			if (start_date) {
+				where.createdAt[Op.gte] = new Date(start_date);
+			}
+			if (end_date) {
+				where.createdAt[Op.lte] = new Date(end_date);
+			}
 		}
 
 		// Sorting
@@ -924,7 +955,7 @@ const GetAllOrdersWithOrderStatus = async (req, res) => {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
 
-		const { page, sort_by, sort_order, order_status = "to_do" } = req.body;
+		const { page, sort_by, sort_order, order_status = "to_do" } = req.query;
 		const pageSize = 20;
 		let currentPage = parseInt(page, 10) || 1;
 		if (currentPage < 1) currentPage = 1;
@@ -1238,53 +1269,76 @@ const UpdateOrderItem = async (req, res) => {
 
 			const updatedItems = [];
 			for (const item of items) {
-				const { orderItem_id, quantity, note, order_item_status, price } = item;
+				const { orderItem_id, item_id, quantity, note, order_item_status, price, ingrediant_id } = item;
+				let currentOrderItem;
 
-				if (!orderItem_id) {
-					return res.status(400).json({ Status: 0, status_code: 400, message: "orderItem_id is required for each item" });
-				}
+				if (orderItem_id) {
+					// Batch update multiple items
+					const updateFields = {};
+					if (quantity !== undefined && quantity !== null) updateFields.quantity = quantity;
+					if (note !== undefined && note !== null) updateFields.note = note;
+					if (order_item_status !== undefined && order_item_status !== null) updateFields.order_item_status = order_item_status;
+					if (price !== undefined && price !== null) updateFields.price = price;
+					if (ingrediant_id !== undefined && ingrediant_id !== null) updateFields.ingrediant_id = String(ingrediant_id);
 
-				const updateFields = {};
-				if (quantity !== undefined && quantity !== null) updateFields.quantity = quantity;
-				if (note !== undefined && note !== null) updateFields.note = note;
-				if (order_item_status !== undefined && order_item_status !== null) updateFields.order_item_status = order_item_status;
-				if (price !== undefined && price !== null) updateFields.price = price;
+					const [affectedRows] = await db.Order_Item.update(updateFields, {
+						where: {
+							orderItem_id,
+							business_id,
+							order_id,
+						},
+					});
 
-				const [affectedRows] = await db.Order_Item.update(updateFields, {
-					where: {
-						orderItem_id,
+					if (affectedRows === 0) {
+						return res.status(404).json({ Status: 0, status_code: 404, message: `Order Item with id ${orderItem_id} not found` });
+					}
+
+					currentOrderItem = await db.Order_Item.findOne({
+						where: { orderItem_id },
+					});
+				} else if (item_id) {
+					// Create new order item
+					const itemExists = await db.Items.findOne({
+						where: { item_id, business_id, is_deleted: false },
+						attributes: ["item_id", "item_name", "discount"],
+					});
+					if (!itemExists) {
+						return res.status(404).json({ Status: 0, status_code: 404, message: `Item with id ${item_id} not found` });
+					}
+
+					currentOrderItem = await db.Order_Item.create({
 						business_id,
 						order_id,
-					},
-				});
-
-				if (affectedRows === 0) {
-					return res.status(404).json({ Status: 0, status_code: 404, message: `Order Item with id ${orderItem_id} not found` });
+						item_id,
+						note: note || "",
+						quantity: quantity || 1,
+						price: price || 0,
+						ingrediant_id: ingrediant_id ? String(ingrediant_id) : "",
+						order_item_status: order_item_status || "to_do",
+					});
+				} else {
+					return res.status(400).json({ Status: 0, status_code: 400, message: "orderItem_id or item_id is required for each item" });
 				}
 
-				const updatedOrderItem = await db.Order_Item.findOne({
-					where: { orderItem_id },
-				});
-
 				// Fetch item details (image and name) from Items and Item_Img table
-				if (updatedOrderItem && updatedOrderItem.item_id) {
+				if (currentOrderItem && currentOrderItem.item_id) {
 					const itemDetails = await db.Items.findOne({
-						where: { item_id: updatedOrderItem.item_id, business_id, is_deleted: false },
-						attributes: ['item_id', 'item_name']
+						where: { item_id: currentOrderItem.item_id, business_id, is_deleted: false },
+						attributes: ["item_id", "item_name"],
 					});
 					if (itemDetails) {
-						updatedOrderItem.dataValues.item_name = itemDetails.item_name;
+						currentOrderItem.dataValues.item_name = itemDetails.item_name;
 
 						// Fetch item image from separate Item_Img table
 						const itemImage = await db.Item_Img.findOne({
-							where: { item_id: updatedOrderItem.item_id, is_deleted: false },
-							attributes: ['image']
+							where: { item_id: currentOrderItem.item_id, is_deleted: false },
+							attributes: ["image"],
 						});
-						updatedOrderItem.dataValues.image = itemImage ? itemImage.image : null;
+						currentOrderItem.dataValues.image = itemImage ? itemImage.image : null;
 					}
 				}
 
-				updatedItems.push(updatedOrderItem);
+				updatedItems.push(currentOrderItem);
 			}
 
 			// Recalculate order totals after batch update
@@ -1525,7 +1579,7 @@ const GetBaristaOrderItems = async (req, res) => {
 		if (!user) {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
-		const { page } = req.body;
+		const { page } = req.query;
 		const pageSize = 20;
 		let currentPage = parseInt(page, 10) || 1;
 		if (currentPage < 1) currentPage = 1;
@@ -1644,7 +1698,7 @@ const GetWaiterOrders = async (req, res) => {
 			return res.status(404).json({ Status: 0, message: "The User Not Found" });
 		}
 
-		const { page } = req.body;
+		const { page } = req.query;
 		const pageSize = 20;
 		let currentPage = parseInt(page, 10) || 1;
 		if (currentPage < 1) currentPage = 1;

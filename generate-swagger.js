@@ -63,6 +63,8 @@ const options = {
 		"./routers/waiter.js",
 		"./routers/order.js",
 		"./routers/customer.js",
+		"./routers/contact_info.js",
+		"./routers/app_policy.js",
 	],
 };
 

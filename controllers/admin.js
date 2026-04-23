@@ -44,9 +44,7 @@ const signin = async (req, res) => {
 
 		const passwordMatch = await bcrypt.compare(password, user.password);
 		if (!passwordMatch)
-			return res
-				.status(200)
-				.json({ Status: 0, message: "Invalid Sign-In Credentials!" });
+			return res.status(400).json({ Status: 0, status_code: 400, message: "Invalid Sign-In Credentials!" });
 
 		let deviceDetail = {
 			device_id,
@@ -68,8 +66,8 @@ const signin = async (req, res) => {
 
 			return res.status(200).json({
 				Status: 1,
-				message: "OTP sent to your registered email successfully",
 				status_code: 200,
+				message: "OTP sent to your registered email successfully",
 				data: {
 					otp: otp,
 					user_id: user.user_id,
@@ -101,8 +99,8 @@ const signin = async (req, res) => {
 
 			return res.status(200).json({
 				Status: 2,
-				message: "Please verify your Account First",
 				status_code: 200,
+				message: "Please verify your Account First",
 				data: {
 					token: token,
 					otp,
@@ -114,8 +112,8 @@ const signin = async (req, res) => {
 		if (role === "user" && !user.is_account_setup)
 			return res.status(200).json({
 				Status: 3,
-				message: "Please setup your Account First",
 				status_code: 200,
+				message: "Please setup your Account First",
 				data: {
 					token: token,
 					user_id: user.user_id,
@@ -123,8 +121,8 @@ const signin = async (req, res) => {
 			});
 		res.status(200).json({
 			Status: 1,
-			message: "Sign-in successfully",
 			status_code: 200,
+			message: "Sign-in successfully",
 			data: {
 				token: token,
 				user_id: user.user_id,

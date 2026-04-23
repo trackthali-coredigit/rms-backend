@@ -3019,6 +3019,134 @@
           }
         }
       }
+    },
+    "/add-contact-info": {
+      "post": {
+        "summary": "Submit contact information",
+        "tags": [
+          "Contact Info"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "subject",
+                  "message"
+                ],
+                "properties": {
+                  "subject": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contact info submitted successfully"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/contact-info/all": {
+      "get": {
+        "summary": "Get all contact information with pagination (Admin only)",
+        "tags": [
+          "Contact Info"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Page number (default 1)"
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Field to sort by (default createdAt)"
+          },
+          {
+            "in": "query",
+            "name": "sort_order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC",
+                "asc",
+                "desc"
+              ]
+            },
+            "description": "Sort order (default DESC)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact info fetched successfully"
+          },
+          "401": {
+            "description": "Unauthorized - Admin only"
+          }
+        }
+      }
+    },
+    "/terms-and-conditions": {
+      "get": {
+        "summary": "Get Terms and Conditions HTML content",
+        "tags": [
+          "AppPolicy"
+        ],
+        "responses": {
+          "200": {
+            "description": "Terms and Conditions fetched successfully"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/privacy-policy": {
+      "get": {
+        "summary": "Get Privacy Policy HTML content",
+        "tags": [
+          "AppPolicy"
+        ],
+        "responses": {
+          "200": {
+            "description": "Privacy Policy fetched successfully"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
     }
   },
   "tags": []

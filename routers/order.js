@@ -978,7 +978,7 @@ router.put(
 				"payment_method must be one of credit_card, debit_card, upi, cash"
 			),
 		check("bill_status")
-			.isIn(["paid", "void"])
+			.isIn(["paid", "unpaid"])
 			.withMessage("bill_status must be one of paid, void"),
 	],
 	validation,

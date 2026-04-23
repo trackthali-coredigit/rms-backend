@@ -111,7 +111,7 @@ const confirmOrder = async (req, res) => {
         },
       });
       const tokens = await db.Token.findByPk(decodedToken.tokenId);
-      if (!user || !tokens || (tokens.tokenVersion !== decodedToken.tokenVersion)) return res.status(401).json({ error: 'Invalid token' });
+      if (!user || !tokens || (tokens.tokenVersion !== decodedToken.tokenVersion)) return res.status(401).json({ Status: 0, status_code: 401, message: 'Invalid token' });
 
     }
 
@@ -120,7 +120,7 @@ const confirmOrder = async (req, res) => {
 
     const Business = await db.Business.findByPk(business_id);
 
-    if (!Table || !Business) return res.status(200).json({ Status: 0, message: "bussines or table not found" });
+    if (!Table || !Business) return res.status(404).json({ Status: 0, status_code: 404, message: "bussines or table not found" });
 
     let newOrder;
     let business_details;
@@ -151,7 +151,7 @@ const confirmOrder = async (req, res) => {
     for (const order of orders) {
       const { item_id, item_image, quantity, note, price, item_name } = order;
       const item = await db.Items.findByPk(item_id);
-      if (!item) return res.status(200).json({ status: 0, message: "item not found" });
+      if (!item) return res.status(404).json({ Status: 0, status_code: 404, message: "item not found" });
 
       // Store the order item in the database
       await db.Order_Item.create({
@@ -167,7 +167,8 @@ const confirmOrder = async (req, res) => {
       const newStock = item.stock - quantity;
       if (item.stock < quantity) {
         return res.status(200).json({
-          status: 0,
+          Status: 0,
+          status_code: 200,
           message: `quantity is not valid for ${item_name}`,
         });
       }

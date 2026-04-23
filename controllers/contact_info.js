@@ -15,14 +15,15 @@ const AddContactInfo = async (req, res) => {
 			message,
 		});
 
-		return res.status(201).json({
+		return res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "Contact info submitted successfully",
 			data: newContactInfo,
 		});
 	} catch (error) {
 		console.error("Error creating contact info:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -39,7 +40,7 @@ const GetAllContactInfo = async (req, res) => {
 		});
 
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "User not authorized" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "User not authorized" });
 		}
 
 		const { page = 1, sort_by = "createdAt", sort_order = "DESC" } = req.query;
@@ -83,6 +84,7 @@ const GetAllContactInfo = async (req, res) => {
 
 		return res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "Contact info fetched successfully",
 			current_page: currentPage,
 			total_pages: totalPages,
@@ -91,7 +93,7 @@ const GetAllContactInfo = async (req, res) => {
 		});
 	} catch (error) {
 		console.error("Error getting contact info:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 

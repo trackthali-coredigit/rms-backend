@@ -16,21 +16,21 @@ const authMiddleware = async (req, res, next) => {
     console.log("token", token);
 
     if (!token) {
-      return res.status(401).json({ message: 'Authentication failed ' });
+      return res.status(401).json({ Status: 0, status_code: 401, message: 'Authentication failed ' });
     }
 
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
     const user = await db.User.findByPk(decodedToken.userId);
     const tokens = await db.Token.findByPk(decodedToken.tokenId);
     if (!user || !tokens || (tokens.tokenVersion !== decodedToken.tokenVersion)) {
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ Status: 0, status_code: 401, message: "Invalid token" });
     }
     req.userData = user;
     req.tokenData = tokens;
     next();
   } catch (error) {
     console.error('Error verifying JWT:', error);
-    res.status(401).json({ message: 'Authentication failed' });
+    res.status(401).json({ Status: 0, status_code: 401, message: 'Authentication failed' });
   }
 };
 
