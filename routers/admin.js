@@ -451,14 +451,14 @@ router.put(
  */
 router.delete(
 	"/deleteCategory",
-	[
-		check("category_id")
-			.not()
-			.isEmpty()
-			.withMessage("Category ID is required")
-			.trim()
-			.escape(),
-	],
+	// [
+	// 	check("category_id")
+	// 		.not()
+	// 		.isEmpty()
+	// 		.withMessage("Category ID is required")
+	// 		.trim()
+	// 		.escape(),
+	// ],
 	validation,
 	authMiddleware,
 	admin.deleteCategory
@@ -1310,23 +1310,29 @@ router.post(
 
 router.put(
 	"/editAssignWaiterToTable",
-	[
-		check("table_ids")
-			.not()
-			.isEmpty()
-			.withMessage("Table IDs are required")
-			.custom((value) => {
-				const tableIds = value.split(",").map((id) => id.trim());
-				const invalidIds = tableIds.some(
-					(id) => isNaN(id) || parseInt(id) <= 0
-				);
-				if (invalidIds) {
-					throw new Error("Invalid table ID format");
-				}
-				return true;
-			})
-			.withMessage("Invalid table ID format"),
-	],
+	// [
+	// 	check("user_id")
+	// 		.not()
+	// 		.isEmpty()
+	// 		.withMessage("User ID is required")
+	// 		.isInt({ min: 1 })
+	// 		.withMessage("User ID must be a positive integer"),
+	// 	check("table_ids")
+	// 		.not()
+	// 		.isEmpty()
+	// 		.withMessage("Table IDs are required")
+	// 		.custom((value) => {
+	// 			const tableIds = value.split(",").map((id) => id.trim());
+	// 			const invalidIds = tableIds.some(
+	// 				(id) => isNaN(id) || parseInt(id) <= 0
+	// 			);
+	// 			if (invalidIds) {
+	// 				throw new Error("Invalid table ID format");
+	// 			}
+	// 			return true;
+	// 		})
+	// 		.withMessage("Invalid table ID format"),
+	// ],
 	validation,
 	authMiddleware,
 	admin.editAssignWaiterToTable
@@ -1448,32 +1454,32 @@ router.get("/getBusinessProfile", authMiddleware, admin.getBusinessProfile);
  */
 router.post(
 	"/businessHours",
-	[
-		check("day").not().isEmpty().withMessage("Day is required").trim().escape(),
-		check("opening_hours")
-			.not()
-			.isEmpty()
-			.withMessage("Opening hours are required")
-			.trim()
-			.escape(),
-		check("closing_hours")
-			.not()
-			.isEmpty()
-			.withMessage("Closing hours are required")
-			.trim()
-			.escape(),
-		check("day_status")
-			.isBoolean()
-			.withMessage("Day status must be a boolean value")
-			.trim()
-			.escape(),
-		check("value")
-			.isIn(["is_all", "is_create", "is_edit", "is_get"])
-			.withMessage("Invalid value for 'value' parameter")
-			.trim()
-			.escape(),
-	],
-	validation,
+	// [
+	// 	check("day").not().isEmpty().withMessage("Day is required").trim().escape(),
+	// 	check("opening_hours")
+	// 		.not()
+	// 		.isEmpty()
+	// 		.withMessage("Opening hours are required")
+	// 		.trim()
+	// 		.escape(),
+	// 	check("closing_hours")
+	// 		.not()
+	// 		.isEmpty()
+	// 		.withMessage("Closing hours are required")
+	// 		.trim()
+	// 		.escape(),
+	// 	check("day_status")
+	// 		.isBoolean()
+	// 		.withMessage("Day status must be a boolean value")
+	// 		.trim()
+	// 		.escape(),
+	// 	check("value")
+	// 		.isIn(["is_all", "is_create", "is_edit", "is_get"])
+	// 		.withMessage("Invalid value for 'value' parameter")
+	// 		.trim()
+	// 		.escape(),
+	// ],
+	// validation,
 	authMiddleware,
 	admin.businessHours
 );

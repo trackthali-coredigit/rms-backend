@@ -30,7 +30,7 @@ const signin = async (req, res) => {
 		let user = await db.User.findOne({
 			where: {
 				[Op.or]: [{ email: emailOrUsername }, { username: emailOrUsername }],
-				role: role,
+				// role: role,
 				is_deleted: false,
 			},
 		});
@@ -39,6 +39,14 @@ const signin = async (req, res) => {
 				Status: 0,
 				status_code: 404,
 				message: "The User Not Found or not verified",
+				data: null
+			});
+
+		if (user.role !== role)
+			return res.status(404).json({
+				Status: 0,
+				status_code: 404,
+				message: "Invalid User role",
 				data: null
 			});
 
@@ -291,7 +299,7 @@ const forgetPassword = async (req, res) => {
 			});
 		}
 		if (!user) {
-			return res.status(200).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
 		const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
@@ -307,12 +315,13 @@ const forgetPassword = async (req, res) => {
 		await common_fun.sendOTPByEmail(emailf.dataValues.email, otp, fullName);
 		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "OTP sent to your email",
 			otp: otp,
 		});
 	} catch (error) {
 		console.error("Error sending temporary password:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 const StaffForgetPassword = async (req, res) => {
@@ -423,22 +432,18 @@ const changePassword = async (req, res) => {
 	try {
 		const { oldPassword, newPassword } = req.body;
 		if (oldPassword === newPassword)
-			return res.status(400).json({
-				Status: 0,
-				message: "New password must be different from the old password",
-			});
+			return res.status(400).json({ Status: 0, status_code: 400, message: "New password must be different from the old password", });
 
 		const user = req.userData;
 
 		const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
 		if (!isPasswordValid)
-			return res
-				.status(200)
-				.json({ Status: 0, message: "Invalid Current password" });
+			return res.status(400).json({ Status: 0, status_code: 400, message: "Invalid Current password" });
 
 		if (oldPassword === newPassword)
-			return res.status(200).json({
+			return res.status(400).json({
 				Status: 0,
+				status_code: 400,
 				message: "New password must be different from the old password",
 			});
 
@@ -446,12 +451,10 @@ const changePassword = async (req, res) => {
 		user.password = hashedPassword;
 		await user.save();
 
-		res
-			.status(200)
-			.json({ Status: 1, message: "Password changed successfully" });
+		res.status(200).json({ Status: 1, status_code: 200, message: "Password changed successfully", data: true });
 	} catch (error) {
 		console.error("Error changing password:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 const signOut = async (req, res) => {
@@ -494,6 +497,45 @@ const businessHours = async (req, res) => {
 			return res.status(404).json({ Status: 0, message: "Admin not Found" });
 		}
 
+		if (Array.isArray(req.body) && req.body.length > 0) {
+			const allResults = [];
+
+			for (const item of req.body) {
+				const { day: itemDay, opening_hours: itemOpening, closing_hours: itemClosing, day_status: itemStatus, value: itemValue } = item;
+
+				if (!itemDay || !itemOpening || !itemClosing || itemStatus === undefined || !itemValue) {
+					return res.status(400).json({
+						Status: 0,
+						message: "All fields (day, opening_hours, closing_hours, day_status, value) are required in list items"
+					});
+				}
+
+				if (itemValue === "is_create") {
+					const result = await db.BusinessHours.create({
+						day: itemDay,
+						opening_hours: itemOpening,
+						closing_hours: itemClosing,
+						day_status: itemStatus,
+						business_id: user.business_id,
+					});
+					allResults.push(result);
+				} else if (itemValue === "is_edit") {
+					const result = await db.BusinessHours.update(
+						{ opening_hours: itemOpening, closing_hours: itemClosing, day_status: itemStatus },
+						{ where: { day: itemDay, business_id: user.business_id } }
+					);
+					allResults.push(result);
+				}
+			}
+
+			return res.status(201).json({
+				Status: 1,
+				message: "Business hours processed successfully",
+				data: allResults,
+			});
+		}
+
+		// Original single parameter logic
 		switch (value) {
 			case "is_all":
 				const days = [
@@ -594,7 +636,7 @@ const addCategory = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		const businessId = user.business_id;
 
@@ -604,9 +646,7 @@ const addCategory = async (req, res) => {
 			where: { category_name, business_id: user.business_id },
 		});
 		if (!!categoryExist) {
-			return res
-				.status(201)
-				.json({ Status: 0, message: "The category already exist" });
+			return res.status(400).json({ Status: 0, status_code: 400, message: "The category already exist" });
 		}
 		// Create the category
 		const category = await db.Category.create({
@@ -614,14 +654,15 @@ const addCategory = async (req, res) => {
 			business_id: businessId,
 		});
 
-		res.status(201).json({
+		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "The Category added successfully",
-			category,
+			data: category,
 		});
 	} catch (error) {
 		console.error("Error adding category:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -637,7 +678,7 @@ const editCategory = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		const { category_id, category_name } = req.body;
 		const category = await db.Category.findOne({
@@ -646,18 +687,19 @@ const editCategory = async (req, res) => {
 		if (!category) {
 			return res
 				.status(404)
-				.json({ Status: 0, message: "The Category Not Found" });
+				.json({ Status: 0, status_code: 404, message: "The Category Not Found" });
 		}
 		category.category_name = category_name;
 		await category.save();
 		return res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "The Category updated successfully",
-			category,
+			data: category,
 		});
 	} catch (error) {
 		console.error("Error editing category:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -673,14 +715,13 @@ const deleteCategory = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		const category_id = req.body.category_id;
+		console.log(category_id);
 		const category = await db.Category.findByPk(category_id);
 		if (!category) {
-			return res
-				.status(404)
-				.json({ Status: 0, message: "The Category not found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The Category not found" });
 		}
 		// Find items associated with the category
 		const items = await db.Items.findAll({ where: { category_id } });
@@ -697,12 +738,10 @@ const deleteCategory = async (req, res) => {
 		// Finally, delete the category itself
 		await category.destroy();
 
-		res
-			.status(200)
-			.json({ Status: 1, message: "The Category deleted successfully" });
+		res.status(200).json({ Status: 1, status_code: 200, message: "The Category deleted successfully", data: true });
 	} catch (error) {
 		console.error("Error deleting category:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -1370,13 +1409,13 @@ const addStaff = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
 		const {
 			first_name,
 			last_name,
-			// username,
+			username,
 			email,
 			country_code,
 			iso_code,
@@ -1385,7 +1424,7 @@ const addStaff = async (req, res) => {
 		} = req.body;
 
 		if (user.role !== "admin" && user.role !== "supervisor") {
-			return res.status(401).json({ Status: 0, message: "Unauthorized" });
+			return res.status(401).json({ Status: 0, status_code: 401, message: "Unauthorized" });
 		}
 		// const same_username = await db.User.findOne({
 		//   where: {
@@ -1395,15 +1434,13 @@ const addStaff = async (req, res) => {
 		// if (!!same_username) {
 		//   return res
 		//     .status(201)
-		//     .json({ Status: 0, message: "This email already Exist" });
+		//     .json({ Status: 0, status_code: 201, message: "This email already Exist" });
 		// }
 		const same_email = await db.User.findOne({
 			where: { email },
 		});
 		if (!!same_email) {
-			return res
-				.status(201)
-				.json({ Status: 0, message: "This email already Exist" });
+			return res.status(400).json({ Status: 0, status_code: 400, message: "This email already Exist" });
 		}
 		let role;
 		if (user.role === "admin") {
@@ -1411,14 +1448,14 @@ const addStaff = async (req, res) => {
 			role = req.body.role; // Assuming role is passed in the request body
 			// Currently allowing admin to add 'user' role as well
 			if (!["waiter", "barista", "supervisor", "user"].includes(role)) {
-				return res.status(400).json({ Status: 0, message: "Invalid role" });
+				return res.status(400).json({ Status: 0, status_code: 400, message: "Invalid role" });
 			}
 		} else {
 			// Supervisor can add only waiter or barista
 			role = req.body.role; // Assuming role is passed in the request body
 			// Currently allowing supervisor to add 'user' role as well
 			if (!["waiter", "barista", "user"].includes(role)) {
-				return res.status(400).json({ Status: 0, message: "Invalid role" });
+				return res.status(400).json({ Status: 0, status_code: 400,	 message: "Invalid role" });
 			}
 		}
 		const hashedPassword = await bcrypt.hash(password, 10);
@@ -1427,7 +1464,7 @@ const addStaff = async (req, res) => {
 			business_id: user.business_id,
 			first_name,
 			last_name,
-			// username,
+			username,
 			email,
 			country_code,
 			iso_code,
@@ -1436,14 +1473,15 @@ const addStaff = async (req, res) => {
 			password: hashedPassword,
 		});
 
-		res.status(201).json({
+		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "The Staff Added Successfully",
 			staff: newStaff,
 		});
 	} catch (error) {
 		console.error("Error adding staff:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 const getStaffList = async (req, res) => {
@@ -1459,7 +1497,7 @@ const getStaffList = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
 		let { page, role } = req.body;
@@ -1488,14 +1526,15 @@ const getStaffList = async (req, res) => {
 		const totalPages = Math.ceil(count / pageSize);
 		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "Get Staff List successfully",
 			current_page: page,
 			total_pages: totalPages,
-			staffList: rows,
+			data: rows,
 		});
 	} catch (error) {
 		console.error("Error fetching staff list:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 const getStaffMemberDetail = async (req, res) => {
@@ -1511,7 +1550,7 @@ const getStaffMemberDetail = async (req, res) => {
 		});
 
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
 		const staffMemberId = req.query.staffMemberId || null; // Get staff member ID from URL params
@@ -1524,19 +1563,18 @@ const getStaffMemberDetail = async (req, res) => {
 		});
 
 		if (!staffMember) {
-			return res
-				.status(404)
-				.json({ Status: 0, message: "The Staff member not found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The Staff member not found" });
 		}
 
 		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "Get Staff Member Detail successfully",
 			staffMember,
 		});
 	} catch (error) {
 		console.error("Error fetching staff member detail:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 const editStaffProfile = async (req, res) => {
@@ -1551,7 +1589,7 @@ const editStaffProfile = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
 		const {
@@ -1575,9 +1613,7 @@ const editStaffProfile = async (req, res) => {
 		});
 
 		if (!staffMember) {
-			return res
-				.status(404)
-				.json({ Status: 0, message: "The Staff member not found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The Staff member not found" });
 		}
 		let hashedPassword;
 		if (!!password) {
@@ -1597,12 +1633,13 @@ const editStaffProfile = async (req, res) => {
 
 		res.status(200).json({
 			Status: 1,
-			message: "The Staff profile Updated successfully",
-			updatedStaffProfile,
+			status_code: 200,
+			message: "Staff profile Updated successfully",
+			data: updatedStaffProfile,
 		});
 	} catch (error) {
 		console.error("Error editing staff profile:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 const deleteStaff = async (req, res) => {
@@ -1639,9 +1676,7 @@ const deleteStaff = async (req, res) => {
 		});
 
 		if (!staffMember) {
-			return res
-				.status(404)
-				.json({ Status: 0, message: "The Staff member not found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The Staff member not found" });
 		}
 
 		if (staffMember.role == "barista") {
@@ -1678,12 +1713,10 @@ const deleteStaff = async (req, res) => {
 
 		await staffMember.destroy();
 
-		res
-			.status(200)
-			.json({ Status: 1, message: "The Staff member deleted successfully" });
+		res.status(200).json({ Status: 1, status_code: 200, message: "The Staff member deleted successfully", data: true });
 	} catch (error) {
 		console.error("Error deleting staff member:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -1745,7 +1778,7 @@ const getTableList = async (req, res) => {
 		});
 
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		page = parseInt(page, 10) || 1;
 		if (page < 1) {
@@ -1764,19 +1797,20 @@ const getTableList = async (req, res) => {
 			offset: offset,
 		});
 		if (!rows) {
-			return res.status(200).json({ Status: 0, message: "Address not found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "Address not found" });
 		}
 		const totalPages = Math.ceil(count / pageSize);
 		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "Get Table List Succesfully",
 			current_page: page,
 			total_pages: totalPages,
-			tables: rows,
+			data: rows,
 		});
 	} catch (error) {
 		console.error("Error fetching table list:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 const removeTable = async (req, res) => {
@@ -1850,7 +1884,7 @@ const assignWaiterToTables = async (req, res) => {
 		});
 
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
 		const { user_id, table_ids } = req.body;
@@ -1858,9 +1892,7 @@ const assignWaiterToTables = async (req, res) => {
 		const waiterfound = await db.User.findByPk(user_id);
 		console.log("waiterfound", waiterfound);
 		if (!(waiterfound.role == "waiter")) {
-			return res
-				.status(404)
-				.json({ Status: 0, message: "The waiter not found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The waiter not found" });
 		}
 		// Split the table_ids string into an array of integers
 		const tableIdsArray = table_ids.split(",").map(Number);
@@ -1872,9 +1904,7 @@ const assignWaiterToTables = async (req, res) => {
 
 		// Check if any tables were found
 		if (tables.length === 0) {
-			return res
-				.status(404)
-				.json({ Status: 0, message: "No valid tables found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "No valid tables found" });
 		}
 
 		// Filter out the table IDs that do not exist
@@ -1887,9 +1917,7 @@ const assignWaiterToTables = async (req, res) => {
 
 		// if already assigned table to waiter
 		if (existingAssignments.length > 0) {
-			return res
-				.status(201)
-				.json({ Status: 0, message: "The Table already assigned to waiter" });
+			return res.status(400).json({ Status: 0, status_code: 400, message: "The Table already assigned to waiter" });
 		}
 
 		// Extract the table IDs that are already assigned to the waiter
@@ -1909,15 +1937,14 @@ const assignWaiterToTables = async (req, res) => {
 			}
 		}
 
-		// Update is_assigned_to_waiter in Tables
-
-		res.status(201).json({
+		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "The Waiters assigned to tables successfully",
 		});
 	} catch (error) {
 		console.error("Error assigning waiter to tables:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -1934,38 +1961,65 @@ const editAssignWaiterToTable = async (req, res) => {
 		});
 
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
 		const { user_id, table_ids } = req.body;
 
-		const waiterFound = await db.User.findByPk(user_id);
-		if (!waiterFound || waiterFound.role !== "waiter") {
-			return res
-				.status(404)
-				.json({ Status: 0, message: "The waiter not found" });
+		// Validate that user_id is a waiter in the same business
+		const waiterFound = await db.User.findOne({
+			where: {
+				user_id: user_id,
+				role: "waiter",
+				business_id: user.business_id,
+				is_deleted: false,
+			},
+		});
+
+		if (!waiterFound) {
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The waiter not found" });
 		}
 
 		const tableIdsArray = table_ids.split(",").map(Number);
 
 		// Find all the tables corresponding to the provided table_ids
 		const tables = await db.Tables.findAll({
-			where: { table_id: tableIdsArray, business_id: user.business_id },
+			where: { table_id: tableIdsArray, business_id: user.business_id, is_deleted: false },
 		});
 
 		if (tables.length === 0) {
-			return res
-				.status(404)
-				.json({ Status: 0, message: "No valid tables found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "No valid tables found" });
+		}
+
+		if (tables.length !== tableIdsArray.length) {
+			return res.status(400).json({
+				Status: 0,
+				status_code: 400,
+				message: "Some table IDs are invalid or don't belong to your business"
+			});
 		}
 
 		const validTableIds = tables.map((table) => table.table_id);
 
-		// Check for existing assignments to other waiters
-		// Remove all previous assignments for these tables
-		await db.Waiter.destroy({ where: { table_id: validTableIds } });
+		// Get ALL current waiter assignments for this waiter (to remove tables not in the new list)
+		const allCurrentAssignments = await db.Waiter.findAll({
+			where: { user_id: user_id },
+		});
 
-		// Assign each table to the waiter (user_id)
+		const allCurrentWaiterIds = allCurrentAssignments.map((w) => w.id);
+
+		// Update orders that reference these waiter IDs to set waiter_id to NULL before deletion
+		if (allCurrentWaiterIds.length > 0) {
+			await db.Order.update(
+				{ waiter_id: null },
+				{ where: { waiter_id: allCurrentWaiterIds } }
+			);
+		}
+
+		// Delete ALL waiter assignments for this waiter
+		await db.Waiter.destroy({ where: { user_id: user_id } });
+
+		// Assign only the new tables to the waiter
 		const insertionPromises = validTableIds.map((table_id) =>
 			db.Waiter.create({ user_id, table_id })
 		);
@@ -1973,11 +2027,13 @@ const editAssignWaiterToTable = async (req, res) => {
 
 		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "The Waiter assigned to tables successfully",
+			data: true,
 		});
 	} catch (error) {
 		console.error("Error editing waiter-table assignments:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
@@ -1996,7 +2052,7 @@ const waitersTableList = async (req, res) => {
 		});
 
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
 		const waiterId = req.query.waiterId;
@@ -2009,9 +2065,7 @@ const waitersTableList = async (req, res) => {
 			},
 		});
 		if (!waiter) {
-			return res
-				.status(404)
-				.json({ Status: 0, message: "The Waiter not found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The Waiter not found" });
 		}
 		const pageSize = 20;
 		let currentPage = parseInt(page, 10) || 1;
@@ -2053,19 +2107,20 @@ const waitersTableList = async (req, res) => {
 			offset,
 		});
 		if (!rows) {
-			return res.status(200).json({ Status: 0, message: "tables not found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "tables not found" });
 		}
 		const totalPages = Math.ceil(count / pageSize);
 		res.status(200).json({
 			Status: 1,
+			status_code: 200,
 			message: "The Waiter Assigned Table List Get Successfully",
 			current_page: currentPage,
 			total_pages: totalPages,
-			tables: rows,
+			data: rows,
 		});
 	} catch (error) {
 		console.error("Error fetching waiter assigned table list:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 
