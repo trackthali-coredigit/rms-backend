@@ -1179,6 +1179,10 @@ router.post(
 	admin.addTable
 );
 
+
+// update route
+router.put("/updateTable", authMiddleware, admin.updateTable);
+
 /**
  * @swagger
  * /getTableList:

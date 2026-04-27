@@ -1455,7 +1455,7 @@ const addStaff = async (req, res) => {
 			role = req.body.role; // Assuming role is passed in the request body
 			// Currently allowing supervisor to add 'user' role as well
 			if (!["waiter", "barista", "user"].includes(role)) {
-				return res.status(400).json({ Status: 0, status_code: 400,	 message: "Invalid role" });
+				return res.status(400).json({ Status: 0, status_code: 400, message: "Invalid role" });
 			}
 		}
 		const hashedPassword = await bcrypt.hash(password, 10);
@@ -1477,7 +1477,7 @@ const addStaff = async (req, res) => {
 			Status: 1,
 			status_code: 200,
 			message: "The Staff Added Successfully",
-			staff: newStaff,
+			data: newStaff,
 		});
 	} catch (error) {
 		console.error("Error adding staff:", error);
@@ -1664,9 +1664,14 @@ const deleteStaff = async (req, res) => {
 			req.userData.role != "admin" && req.userData.role != "supervisor"
 		);
 		if (req.userData.role != "admin" && req.userData.role != "supervisor") {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		const { staffMemberId } = req.body;
+
+		// Validate staffMemberId is provided
+		if (!staffMemberId) {
+			return res.status(400).json({ Status: 0, status_code: 400, message: "Staff Member ID is required" });
+		}
 
 		const staffMember = await db.User.findOne({
 			where: {
@@ -1688,11 +1693,23 @@ const deleteStaff = async (req, res) => {
 		} else if (staffMember.role == "waiter") {
 			console.log(" im a waiter...................................");
 
-			await db.Order.update(
-				{ waiter_id: null },
-				{ where: { waiter_id: staffMemberId } }
-			);
+			// Get all waiter IDs (id from tbl_waiter table) for this user
+			const waiterRecords = await db.Waiter.findAll({
+				where: { user_id: staffMemberId },
+				attributes: ['id'],
+			});
 
+			const waiterIds = waiterRecords.map((w) => w.id);
+
+			// Update orders using the waiter IDs from tbl_waiter table
+			if (waiterIds.length > 0) {
+				await db.Order.update(
+					{ waiter_id: null },
+					{ where: { waiter_id: waiterIds } }
+				);
+			}
+
+			// Destroy waiter assignments
 			await db.Waiter.destroy({
 				where: { user_id: staffMemberId },
 			});
@@ -1733,7 +1750,7 @@ const addTable = async (req, res) => {
 		});
 
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
 		const { table_no } = req.body;
@@ -1745,9 +1762,7 @@ const addTable = async (req, res) => {
 			},
 		});
 		if (!!existTable) {
-			return res
-				.status(201)
-				.json({ Status: 0, message: `Table ${table_no} already exist` });
+			return res.status(404).json({ Status: 0, status_code: 404, message: `Table ${table_no} already exist` });
 		} else {
 			// Create the table
 			var table = await db.Tables.create({
@@ -1755,14 +1770,103 @@ const addTable = async (req, res) => {
 				table_no,
 			});
 		}
-		res
-			.status(201)
-			.json({ Status: 1, message: "The Table added successfully", table });
+		res.status(200).json({ Status: 1, status_code: 200, message: "The Table added successfully", data: table });
 	} catch (error) {
 		console.error("Error adding table:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
+
+const updateTable = async (req, res) => {
+	try {
+		const user_id = req.userData.user_id;
+
+		// Check user role
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id },
+					{ [Op.or]: [{ role: "admin" }, { role: "supervisor" }] },
+				],
+			},
+		});
+
+		if (!user) {
+			return res.status(404).json({
+				Status: 0,
+				status_code: 404,
+				message: "The User Not Found",
+			});
+		}
+
+		const { table_id, table_no } = req.body;
+
+		// Check table exists
+		const table = await db.Tables.findOne({
+			where: {
+				table_id,
+				business_id: user.business_id,
+				is_deleted: false,
+			},
+		});
+
+		if (!table) {
+			return res.status(404).json({
+				Status: 0,
+				status_code: 404,
+				message: "Table not found",
+			});
+		}
+
+		// Check duplicate table_no (exclude current table)
+		const existTable = await db.Tables.findOne({
+			where: {
+				business_id: user.business_id,
+				table_no,
+				is_deleted: false,
+				table_id: {
+					[Op.ne]: table_id,
+				},
+			},
+		});
+
+		if (existTable) {
+			return res.status(400).json({
+				Status: 0,
+				status_code: 400,
+				message: `Table ${table_no} already exists`,
+			});
+		}
+
+		// Update table
+		await db.Tables.update(
+			{ table_no },
+			{
+				where: { table_id },
+			}
+		);
+
+		// Get updated data
+		const updatedTable = await db.Tables.findOne({
+			where: { table_id },
+		});
+
+		return res.status(200).json({
+			Status: 1,
+			status_code: 200,
+			message: "Table updated successfully",
+			data: updatedTable,
+		});
+	} catch (error) {
+		console.error("Error updating table:", error);
+		return res.status(500).json({
+			Status: 0,
+			status_code: 500,
+			message: "Internal Server Error",
+		});
+	}
+};
+
 const getTableList = async (req, res) => {
 	try {
 		const user_id = req.userData.user_id;
@@ -1791,6 +1895,7 @@ const getTableList = async (req, res) => {
 		let { count, rows } = await db.Tables.findAndCountAll({
 			where: {
 				business_id: businessId,
+				is_deleted: false,
 			},
 			distinct: true,
 			limit: pageSize,
@@ -1826,7 +1931,7 @@ const removeTable = async (req, res) => {
 		});
 
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 
 		const { table_ids } = req.query;
@@ -1863,12 +1968,10 @@ const removeTable = async (req, res) => {
 		// 	},
 		// });
 
-		res
-			.status(200)
-			.json({ Status: 1, message: "The Tables removed successfully" });
+		res.status(200).json({ Status: 1, status_code: 200, message: "The Tables removed successfully", data: true });
 	} catch (error) {
 		console.error("Error removing tables:", error);
-		res.status(500).json({ Status: 0, message: "Internal Server Error" });
+		res.status(500).json({ Status: 0, status_code: 500, message: "Internal Server Error" });
 	}
 };
 const assignWaiterToTables = async (req, res) => {
@@ -1941,6 +2044,7 @@ const assignWaiterToTables = async (req, res) => {
 			Status: 1,
 			status_code: 200,
 			message: "The Waiters assigned to tables successfully",
+			data: true
 		});
 	} catch (error) {
 		console.error("Error assigning waiter to tables:", error);
@@ -2877,6 +2981,7 @@ module.exports = {
 	getStaffMemberDetail,
 
 	addTable,
+	updateTable,
 	getTableList,
 	removeTable,
 	assignWaiterToTables,

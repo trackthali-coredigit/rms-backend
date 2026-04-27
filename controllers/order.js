@@ -351,7 +351,7 @@ const GetAllOrders = async (req, res) => {
 			},
 		});
 		if (!user) {
-			return res.status(404).json({ Status: 0, message: "The User Not Found" });
+			return res.status(404).json({ Status: 0, status_code: 404, message: "The User Not Found" });
 		}
 		const { page, order_status, order_type, bill_status, sort_by, sort_order, start_date, end_date } =
 			req.query;
@@ -1860,6 +1860,184 @@ const PayBill = async (req, res) => {
 	}
 };
 
+const GetTakeawayOrders = async (req, res) => {
+	try {
+		console.log("im in get takeaway orders controller");
+
+		const current_user_id = req.userData.user_id;
+		const business_id = req.userData.business_id;
+
+		const user = await db.User.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id: current_user_id },
+					{
+						[Op.or]: [
+							{ role: "waiter" },
+							{ role: "admin" },
+							{ role: "supervisor" },
+						],
+					},
+				],
+			},
+		});
+
+		if (!user) {
+			return res.status(404).json({
+				status_code: 404,
+				Status: 0,
+				message: "User not found",
+			});
+		}
+
+		const { page = 1, order_status = "all" } = req.query;
+
+		const pageSize = 20;
+		let currentPage = parseInt(page, 10) || 1;
+		if (currentPage < 1) currentPage = 1;
+
+		const offset = (currentPage - 1) * pageSize;
+
+		let where = {
+			business_id,
+			order_type: "take_away",
+		};
+
+		if (order_status && order_status !== "all") {
+			where.order_status = order_status;
+		}
+
+		const { count, rows } = await db.Order.findAndCountAll({
+			where,
+			include: [
+				{
+					model: db.Order_Item,
+					as: "order_items_models",
+					required: false,
+					include: [
+						{
+							model: db.User,
+							attributes: ["user_id", "first_name", "last_name", "role"],
+							required: false,
+						},
+					],
+				},
+				{
+					model: db.User,
+					attributes: ["user_id", "role", "first_name", "last_name"],
+					required: false,
+				},
+				{
+					model: db.Waiter,
+					attributes: ["id", "user_id"],
+					required: false,
+					include: [
+						{
+							model: db.User,
+							as: "users_model",
+							attributes: ["user_id", "first_name", "last_name", "role"],
+							required: false,
+						},
+					],
+				},
+				{
+					model: db.Business,
+					attributes: ["business_id", "business_name", "tax"],
+					required: false,
+				},
+			],
+			distinct: true,
+			limit: pageSize,
+			offset,
+			order: [["updatedAt", "DESC"]],
+		});
+
+		for (const order of rows) {
+			if (!order.order_items_models) continue;
+
+			for (const item of order.order_items_models) {
+
+				if (item.item_id) {
+					const itemData = await db.Items.findOne({
+						where: {
+							item_id: item.item_id,
+							business_id,
+							is_deleted: false,
+						},
+						attributes: ["item_id", "item_name"],
+					});
+
+					if (itemData) {
+						item.dataValues.item_name = itemData.item_name;
+
+						const itemImage = await db.Item_Img.findOne({
+							where: {
+								item_id: item.item_id,
+								is_deleted: false,
+							},
+							attributes: ["image"],
+						});
+
+						item.dataValues.image = itemImage ? itemImage.image : null;
+					} else {
+						item.dataValues.item_name = null;
+						item.dataValues.image = null;
+					}
+				}
+
+				if (item.ingrediant_id) {
+					const ids = item.ingrediant_id
+						.split(",")
+						.map((id) => id.trim())
+						.filter(Boolean);
+
+					if (ids.length > 0) {
+						const ingrediants = await db.Ingrediant.findAll({
+							where: {
+								ingrediant_id: ids,
+								business_id,
+							},
+							attributes: ["ingrediant_id", "name", "price"],
+						});
+
+						item.dataValues.ingrediant_models = ingrediants;
+					} else {
+						item.dataValues.ingrediant_models = [];
+					}
+				} else {
+					item.dataValues.ingrediant_models = [];
+				}
+			}
+		}
+
+		return res.status(200).json({
+			status_code: 200,
+			Status: 1,
+			message: "Takeaway orders fetched successfully",
+			filters: {
+				order_status,
+			},
+			data: rows,
+			pagination: {
+				total_records: count,
+				total_pages: Math.ceil(count / pageSize),
+				current_page: currentPage,
+				page_size: pageSize,
+			},
+		});
+
+	} catch (error) {
+		console.error("Error getting takeaway orders:", error);
+
+		return res.status(500).json({
+			status_code: 500,
+			Status: 0,
+			message: "Internal Server Error",
+			error: error.message,
+		});
+	}
+};
+
 module.exports = {
 	MakeOrder,
 	UpdateOrder,
@@ -1877,5 +2055,6 @@ module.exports = {
 	WaiterOrderComplete,
 	GenerateBill,
 	PayBill,
+	GetTakeawayOrders,
 	// GetWaiterOrders,
 };

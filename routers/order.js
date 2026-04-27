@@ -264,6 +264,13 @@ router.get(
 	orders.GetAllOrders
 );
 
+// supervisor and admin can see all orders with filters and pagination
+router.get(
+	"/takeaway/orders/all",
+	authMiddleware,
+	orders.GetTakeawayOrders
+);
+
 /**
  * @swagger
  * /waiter/orders/all:
